@@ -223,10 +223,7 @@ class ActionsMFA extends CommonHookActions
             print '<div class="opacitymedium small">' . dol_escape_htmltag($uri) . '</div>';
 
             if (empty($mfa->enabled)) {
-                print '<form method="POST">';
-                print '<input type="hidden" name="id" value="' . $object->id . '">';
-                print '<input type="hidden" name="action" value="enablemfa">';
-                print '<input type="hidden" name="token" value="' . newToken() . '">';
+                print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=enablemfa&token=' . newToken() . '">';
 
                 print '<input type="text" name="mfa_verif" maxlength="6" placeholder="' . $langs->trans("EnterVerifyCode") . '" class="flat"> ';
                 print '<input type="submit" class="button" value="' . $langs->trans("VerifyAndEnable") . '">';
