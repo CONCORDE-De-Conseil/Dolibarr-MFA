@@ -42,11 +42,8 @@ function check_user_password_mfa($login, $password, $entity)
     if (empty($challengeLogin) && !empty($_SESSION['dol_mfa_challenge_login'])) {
         $challengeLogin = $_SESSION['dol_mfa_challenge_login'];
     }
-    if (empty($challengePassword) && !empty($_SESSION['dol_mfa_challenge_password'])) {
-        $challengePassword = $_SESSION['dol_mfa_challenge_password'];
-    }
-    if (empty($challengeCode) && !empty($_SESSION['dol_mfa_challenge_code'])) {
-        $challengeCode = (int) $_SESSION['dol_mfa_challenge_code'];
+    if (empty($challengeEntity) && !empty($_SESSION['dol_mfa_challenge_entity'])) {
+        $challengeEntity = (int) $_SESSION['dol_mfa_challenge_entity'];
     }
 
     require_once DOL_DOCUMENT_ROOT . '/core/login/functions_dolibarr.php';

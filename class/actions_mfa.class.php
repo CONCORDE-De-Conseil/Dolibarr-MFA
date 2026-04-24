@@ -25,6 +25,7 @@
  */
 
 require_once DOL_DOCUMENT_ROOT . '/core/class/commonhookactions.class.php';
+require_once dol_buildpath('/mfa/class/mfaservice.class.php');
 
 /**
  * Class ActionsMFA
@@ -73,6 +74,24 @@ class ActionsMFA extends CommonHookActions
         $this->db = $db;
     }
 
+    /**
+     * Clear MFA challenge markers from session.
+     *
+     * @param bool $renewSessionId True to renew PHP session id after cleanup
+     * @return void
+     */
+    private function clearMfaChallengeSession($renewSessionId = false)
+    {
+        unset($_SESSION['dol_mfa_challenge_user_id']);
+        unset($_SESSION['dol_mfa_challenge_login']);
+        unset($_SESSION['dol_mfa_challenge_entity']);
+        unset($_SESSION['dol_mfa_password_verified']);
+
+        if ($renewSessionId) {
+            session_regenerate_id(true);
+        }
+    }
+
 
     /**
      * Execute action
@@ -104,6 +123,18 @@ class ActionsMFA extends CommonHookActions
     {
         global $langs;
 
+        $langs->load('mfa@mfa');
+
+        $requestedAction = GETPOST('action', 'aZ09');
+        $confirm = GETPOST('confirm', 'alpha');
+        $mfaAbort = GETPOSTINT('mfaabort');
+
+        if (!empty($_SESSION['dol_mfa_challenge_user_id']) && (($requestedAction === 'login' && $confirm === 'no') || $mfaAbort === 1)) {
+            $this->clearMfaChallengeSession(true);
+            $_SESSION['dol_loginmesg'] = $langs->trans('MFASessionDestroyed');
+            return 0;
+        }
+
         if (empty($_SESSION['dol_mfa_challenge_user_id'])) {
             return 0;
         }
@@ -111,6 +142,18 @@ class ActionsMFA extends CommonHookActions
         require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
 
         $form = new Form($this->db);
+        $pendingLogin = (string) $_SESSION['dol_mfa_challenge_login'];
+        $pendingLoginEscaped = dol_escape_htmltag($pendingLogin);
+        $pendingEntity = (int) $_SESSION['dol_mfa_challenge_entity'];
+        $pageConfirm = $_SERVER['PHP_SELF']
+            . '?username=' . urlencode($pendingLogin)
+            . '&entity=' . $pendingEntity
+            . '&actionlogin=login'
+            . '&loginfunction=loginfunction';
+        $confirmMessage = $langs->trans('EnterMFACode') . '<br><span class="opacitymedium">' . $langs->trans('MFAContinueAs', $pendingLoginEscaped) . '</span>';
+
+        $logoutUrl = $_SERVER['PHP_SELF'] . '?mfaabort=1&token=' . urlencode(newToken());
+        print '<div class="warning">' . $langs->trans('MFAPendingChallenge') . ' ' . $langs->trans('MFAContinueAs', '<strong>' . $pendingLoginEscaped . '</strong>') . ' <a href="' . dol_escape_htmltag($logoutUrl) . '">' . $langs->trans('Logout') . '</a></div>';
 
         $formquestion = array(
             array(
@@ -121,37 +164,17 @@ class ActionsMFA extends CommonHookActions
                 'size' => 6,
                 'moreattr' => 'maxlength="6" inputmode="numeric" autocomplete="one-time-code" id="mfa_code"',
             ),
-            array(
-                'name' => 'username',
-                'type' => 'hidden',
-                'value' => $_SESSION['dol_mfa_challenge_login'],
-            ),
-            array(
-                'name' => 'entity',
-                'type' => 'hidden',
-                'value' => (string) ((int) $_SESSION['dol_mfa_challenge_entity']),
-            ),
-            array(
-                'name' => 'actionlogin',
-                'type' => 'hidden',
-                'value' => 'login',
-            ),
-            array(
-                'name' => 'loginfunction',
-                'type' => 'hidden',
-                'value' => 'loginfunction',
-            ),
         );
 
         $formconfirm = $form->formconfirm(
-            $_SERVER['PHP_SELF'],
+            $pageConfirm,
             $langs->trans('MFAVerification'),
-            $langs->trans('EnterMFACode'),
+            $confirmMessage,
             'login',
             $formquestion,
             '',
-            1,
-            220
+            2,
+            250
         );
 
         print $formconfirm;
@@ -258,7 +281,6 @@ class ActionsMFA extends CommonHookActions
         global $langs, $user;
 
         if ($action == 'disablemfa') {
-            require_once dol_buildpath('/mfa/class/mfaservice.class.php');
             $mfaService = new MFAService($this->db);
             if ($user->admin || $user->id == $object->id) {
                 $mfaService->disableForUser($object);
@@ -267,7 +289,6 @@ class ActionsMFA extends CommonHookActions
         }
 
         if ($action == 'enablemfa') {
-            require_once dol_buildpath('/mfa/class/mfaservice.class.php');
             $mfaService = new MFAService($this->db);
             $id = GETPOST('id', 'int');
             $mfa = $mfaService->getForUser($user->id, $user->entity);

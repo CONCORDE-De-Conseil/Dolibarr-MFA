@@ -57,4 +57,7 @@ VerifyAndEnable = Verify and Enable
 MFACodeRequired = MFA code is required.
 EnterMFACode = Please enter the 6-digit verification code from your authenticator app.
 InvalidMFACode = Invalid MFA code. Please try again.
+MFAPendingChallenge = A login session is waiting for MFA confirmation.
+MFAContinueAs = Continue as %s?
+MFASessionDestroyed = Pending MFA session has been destroyed.
 Verify = Verify
