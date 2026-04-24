@@ -6,7 +6,7 @@
  *	\ingroup    mfa
  *	\brief      Module descriptor for MFA.
  */
-require_once DOL_DOCUMENT_ROOT . '/core/modules/modules.class.php';
+include_once DOL_DOCUMENT_ROOT . '/core/modules/DolibarrModules.class.php';
 
 /**
  *	Class to describe MFA module
