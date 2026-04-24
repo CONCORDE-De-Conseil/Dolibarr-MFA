@@ -102,30 +102,64 @@ class ActionsMFA extends CommonHookActions
      */
     public function getLoginPageExtraContent($parameters, &$object, &$action, $hookmanager)
     {
-        global $langs, $conf;
-        var_dump('mainloginpage hook triggered 11'); // Debug line to confirm hook execution
-        // die();
+        global $langs;
 
-        // Check if we are in a login challenge context
-        if (isset($_SESSION["dol_mfa_challenge_user_id"])) {
-            // We are in MFA challenge context, show the code input field
-            require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
-            $form = new Form($db);
-            var_dump('mainloginpage hook - showing MFA challenge form'); // Debug line to confirm form display
-
-            $more = '<input type="text" name="mfa_code" maxlength="6" class="flat" placeholder="123456" autofocus>';
-
-            $formconfirm = $form->formconfirm(
-                $_SERVER["PHP_SELF"] . '?actionlogin=login' . '&mfa_challenge=1',
-                $langs->trans("MFAVerification"),
-                $langs->trans("EnterMFACode"),
-                'confirm_mfa',
-                array(),
-                '',
-                1,
-                $more
-            );
+        if (empty($_SESSION['dol_mfa_challenge_user_id'])) {
+            return 0;
         }
+
+        require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
+
+        $form = new Form($this->db);
+
+        $formquestion = array(
+            array(
+                'name' => 'mfa_code',
+                'label' => $langs->trans('OTPCode'),
+                'type' => 'text',
+                'value' => '',
+                'size' => 6,
+                'moreattr' => 'maxlength="6" inputmode="numeric" autocomplete="one-time-code" id="mfa_code"',
+            ),
+            array(
+                'name' => 'username',
+                'type' => 'hidden',
+                'value' => $_SESSION['dol_mfa_challenge_login'],
+            ),
+            array(
+                'name' => 'password',
+                'type' => 'hidden',
+                'value' => $_SESSION['dol_mfa_challenge_password'],
+            ),
+            array(
+                'name' => 'entity',
+                'type' => 'hidden',
+                'value' => (string) ((int) $_SESSION['dol_mfa_challenge_entity']),
+            ),
+            array(
+                'name' => 'actionlogin',
+                'type' => 'hidden',
+                'value' => 'login',
+            ),
+            array(
+                'name' => 'loginfunction',
+                'type' => 'hidden',
+                'value' => 'loginfunction',
+            ),
+        );
+
+        $formconfirm = $form->formconfirm(
+            $_SERVER['PHP_SELF'],
+            $langs->trans('MFAVerification'),
+            $langs->trans('EnterMFACode'),
+            'login',
+            $formquestion,
+            '',
+            1,
+            220
+        );
+
+        print $formconfirm;
 
         return 0;
     }
@@ -145,18 +179,14 @@ class ActionsMFA extends CommonHookActions
             return 0;
         }
 
-        global $langs, $user, $db;
+        global $langs, $user;
 
         $langs->load("mfa@mfa");
-
-        require_once dol_buildpath('/mfa/class/mfaservice.class.php');
-        require_once DOL_DOCUMENT_ROOT . '/core/lib/security.lib.php';
-
-        $mfaService = new MFAService($db);
+        $mfaService = new MFAService($this->db);
 
         $id = GETPOST('id', 'int');
         $currentAction = GETPOST('action', 'alpha');
-        $currentUser = new User($db);
+        $currentUser = new User($this->db);
         $currentUser->fetch($id);
 
         $mfa = $mfaService->getForUser($object->id, $object->entity);

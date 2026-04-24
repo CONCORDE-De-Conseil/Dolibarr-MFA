@@ -43,6 +43,9 @@ MyWidgetDescription = My widget description
 
 # MFA
 MFACode = MFA Code
+OTPCode = OTP Code
+MFAVerification = MFA Verification
+MFADisabled = MFA has been disabled.
 IfEnabled = if enabled
 MFAStatus = MFA Status
 SetupMFA = Setup MFA
