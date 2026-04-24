@@ -127,11 +127,6 @@ class ActionsMFA extends CommonHookActions
                 'value' => $_SESSION['dol_mfa_challenge_login'],
             ),
             array(
-                'name' => 'password',
-                'type' => 'hidden',
-                'value' => $_SESSION['dol_mfa_challenge_password'],
-            ),
-            array(
                 'name' => 'entity',
                 'type' => 'hidden',
                 'value' => (string) ((int) $_SESSION['dol_mfa_challenge_entity']),
@@ -191,27 +186,18 @@ class ActionsMFA extends CommonHookActions
 
         $mfa = $mfaService->getForUser($object->id, $object->entity);
 
-        // 🔐 Handle disable MFA
-        if ($currentAction === 'disablemfa') {
-            if ($user->admin || $user->id == $object->id) {
-                $mfaService->disableForUser($currentUser);
-                setEventMessages($langs->trans("MFADisabled"), null, 'mesgs');
-            }
-        }
-
         // 🔐 Ensure secret exists (ONLY when needed)
         if ($currentAction === 'setupmfa') {
+            // If we are in setup mode, we only generate a new secret if the user doesn't already have an unconfirmed one
             if (!$mfa || empty($mfa->secret)) {
                 $secret = $mfaService->generateSecret();
                 $mfaService->createOrUpdateSecret($currentUser, $secret, 0);
+                // Reload MFA to get the newly created secret
+                $mfa = $mfaService->getForUser($currentUser->id, $currentUser->entity);
             } else {
                 $secret = dolDecrypt($mfa->secret);
             }
         }
-
-
-        // Reload MFA after potential update
-        $mfa = $mfaService->getForUser($currentUser->id, $currentUser->entity);
 
         print '<!-- MFA Section -->';
 
@@ -269,13 +255,21 @@ class ActionsMFA extends CommonHookActions
 
     public function doActions($parameters, &$object, &$action, $hookmanager)
     {
-        if ($action == 'enablemfa') {
+        global $langs, $user;
 
+        if ($action == 'disablemfa') {
+            require_once dol_buildpath('/mfa/class/mfaservice.class.php');
+            $mfaService = new MFAService($this->db);
+            if ($user->admin || $user->id == $object->id) {
+                $mfaService->disableForUser($object);
+                setEventMessages($langs->trans("MFADisabled"), null, 'mesgs');
+            }
+        }
+
+        if ($action == 'enablemfa') {
             require_once dol_buildpath('/mfa/class/mfaservice.class.php');
             $mfaService = new MFAService($this->db);
             $id = GETPOST('id', 'int');
-            $user = new User($this->db);
-            $user->fetch($id);
             $mfa = $mfaService->getForUser($user->id, $user->entity);
             $secret = dolDecrypt($mfa->secret);
             $code = GETPOST('mfa_verif', 'alphanohtml');

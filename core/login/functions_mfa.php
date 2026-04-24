@@ -51,13 +51,21 @@ function check_user_password_mfa($login, $password, $entity)
 
     require_once DOL_DOCUMENT_ROOT . '/core/login/functions_dolibarr.php';
 
-    $response = check_user_password_dolibarr($challengeLogin, $challengePassword, $challengeEntity);
+    // 1. Verify standard password (or check if already verified in this session)
+    $password_already_verified = (!empty($_SESSION['dol_mfa_password_verified']) && $_SESSION['dol_mfa_challenge_login'] === $challengeLogin);
+
+    if ($password_already_verified) {
+        $response = $challengeLogin;
+    } else {
+        $response = check_user_password_dolibarr($challengeLogin, $challengePassword, $challengeEntity);
+    }
 
     if ($response == '') {
         return '';
     }
 
-    // if response is not empty, it means that login/password is correct, we now check if MFA is enabled for this user and if yes, we check the code
+    // If response is not empty, it means that login/password is correct.
+    // We now check if MFA is enabled for this user and if yes, we check the code.
 
     require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
     $userstatic = new User($db);
@@ -79,8 +87,8 @@ function check_user_password_mfa($login, $password, $entity)
             $_SESSION["dol_loginmesg"] = $langs->trans("MFACodeRequired");
             $_SESSION["dol_mfa_challenge_user_id"] = $userstatic->id;
             $_SESSION["dol_mfa_challenge_login"] = $challengeLogin;
-            $_SESSION["dol_mfa_challenge_password"] = $challengePassword;
             $_SESSION["dol_mfa_challenge_entity"] = $challengeEntity;
+            $_SESSION["dol_mfa_password_verified"] = true; // Flag that password check passed
 
             return '--bad-login-validity--';
         }
@@ -93,15 +101,15 @@ function check_user_password_mfa($login, $password, $entity)
             $_SESSION["dol_loginmesg"] = $langs->trans("InvalidMFACode");
             $_SESSION["dol_mfa_challenge_user_id"] = $userstatic->id;
             $_SESSION["dol_mfa_challenge_login"] = $challengeLogin;
-            $_SESSION["dol_mfa_challenge_password"] = $challengePassword;
             $_SESSION["dol_mfa_challenge_entity"] = $challengeEntity;
+            $_SESSION["dol_mfa_password_verified"] = true;
 
             return '--bad-login-validity--';
         }
 
         unset($_SESSION["dol_mfa_challenge_user_id"]);
         unset($_SESSION["dol_mfa_challenge_login"]);
-        unset($_SESSION["dol_mfa_challenge_password"]);
+        unset($_SESSION["dol_mfa_password_verified"]);
         unset($_SESSION["dol_mfa_challenge_entity"]);
     }
 
