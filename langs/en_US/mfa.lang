@@ -51,3 +51,7 @@ MFASecret = MFA Secret
 ScanThisUri = Scan this QR Code or URI with your Authenticator App
 EnterVerifyCode = Enter verification code
 VerifyAndEnable = Verify and Enable
+MFACodeRequired = MFA code is required.
+EnterMFACode = Please enter the 6-digit verification code from your authenticator app.
+InvalidMFACode = Invalid MFA code. Please try again.
+Verify = Verify

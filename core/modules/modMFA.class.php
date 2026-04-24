@@ -60,7 +60,15 @@ class modMFA extends DolibarrModules
             'js' => array(
                 //'/mfa/js/mfa.js.php',
             ),
-            'hooks' => array('mainloginpage', 'login', 'usercard', 'globalcard'),
+            'hooks' => array(
+                'data' => array(
+                    'mainloginpage',
+                    'login',
+                    'usercard',
+                    'globalcard'
+                ),
+                //   'entity' => '0',
+            ),
             // 'login' => array('mfa' => '/mfa/core/login/functions_mfa.php'),
             // Set this to 1 if features of module are opened to external users
             'moduleforexternal' => 0,

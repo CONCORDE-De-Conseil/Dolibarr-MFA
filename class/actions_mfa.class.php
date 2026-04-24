@@ -100,16 +100,33 @@ class ActionsMFA extends CommonHookActions
      * @param object $hookmanager Hook manager
      * @return int               Return 0
      */
-    public function mainloginpage($parameters, &$object, &$action, $hookmanager)
+    public function getLoginPageExtraContent($parameters, &$object, &$action, $hookmanager)
     {
-        if ($parameters['attribute'] == 'login_extra_fields') {
-            global $langs;
-            $langs->load("mfa@mfa");
-            print '<div class="login_main_field">';
-            print '<label for="mfa_code">' . $langs->trans("MFACode") . ' (' . $langs->trans("IfEnabled") . ')</label>';
-            print '<input type="text" name="mfa_code" id="mfa_code" class="flat" maxlength="6" autocomplete="one-time-code" placeholder="123456">';
-            print '</div>';
+        global $langs, $conf;
+        var_dump('mainloginpage hook triggered 11'); // Debug line to confirm hook execution
+        // die();
+
+        // Check if we are in a login challenge context
+        if (isset($_SESSION["dol_mfa_challenge_user_id"])) {
+            // We are in MFA challenge context, show the code input field
+            require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
+            $form = new Form($db);
+            var_dump('mainloginpage hook - showing MFA challenge form'); // Debug line to confirm form display
+
+            $more = '<input type="text" name="mfa_code" maxlength="6" class="flat" placeholder="123456" autofocus>';
+
+            $formconfirm = $form->formconfirm(
+                $_SERVER["PHP_SELF"] . '?actionlogin=login' . '&mfa_challenge=1',
+                $langs->trans("MFAVerification"),
+                $langs->trans("EnterMFACode"),
+                'confirm_mfa',
+                array(),
+                '',
+                1,
+                $more
+            );
         }
+
         return 0;
     }
 
@@ -240,5 +257,4 @@ class ActionsMFA extends CommonHookActions
             }
         }
     }
-
 }

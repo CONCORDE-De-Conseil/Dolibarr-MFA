@@ -9,11 +9,10 @@ class MFAService
         $this->db = $db;
     }
 
-    public function getForUser($user_id, $entity = 1)
+    public function getForUser($user_id)
     {
         require_once dol_buildpath('/mfa/class/mfa.class.php');
         $mfa = new MFA($this->db);
-        $mfa->entity = $entity;
         if ($mfa->fetch(0, $user_id) > 0) {
             return $mfa;
         }
@@ -22,7 +21,7 @@ class MFAService
 
     public function createOrUpdateSecret(User $user, $secret, $enabled = 0)
     {
-        $mfa = $this->getForUser($user->id, $user->entity);
+        $mfa = $this->getForUser($user->id);
         require_once DOL_DOCUMENT_ROOT . '/core/lib/security.lib.php';
         if (!$mfa) {
             $mfa = new MFA($this->db);
@@ -43,7 +42,7 @@ class MFAService
 
     public function enableMFA(User $user)
     {
-        $mfa = $this->getForUser($user->id, $user->entity);
+        $mfa = $this->getForUser($user->id);
         if ($mfa) {
             $mfa->enabled = 1;
             return $mfa->update($user);
