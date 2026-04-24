@@ -40,3 +40,14 @@ MyPageName = My page name
 #
 MyWidget = My widget
 MyWidgetDescription = My widget description
+
+# MFA
+MFACode = MFA Code
+IfEnabled = if enabled
+MFAStatus = MFA Status
+SetupMFA = Setup MFA
+MFAQRCode = MFA QR Code
+MFASecret = MFA Secret
+ScanThisUri = Scan this QR Code or URI with your Authenticator App
+EnterVerifyCode = Enter verification code
+VerifyAndEnable = Verify and Enable
