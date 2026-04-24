@@ -34,8 +34,38 @@ class modMFA extends DolibarrModules
 
         // Module parts (hooks, login backend, etc)
         $this->module_parts = array(
+            // Set this to 1 if module has its own trigger directory (core/triggers)
+            'triggers' => 1,
+            // Set this to 1 if module has its own login method file (core/login)
+            'login' => 1,
+            // Set this to 1 if module has its own substitution function file (core/substitutions)
+            'substitutions' => 0,
+            // Set this to 1 if module has its own menus handler directory (core/menus)
+            'menus' => 0,
+            // Set this to 1 if module overwrite template dir (core/tpl)
+            'tpl' => 1,
+            // Set this to 1 if module has its own barcode directory (core/modules/barcode)
+            'barcode' => 0,
+            // Set this to 1 if module has its own models directory (core/modules/xxx)
+            'models' => 1,
+            // Set this to 1 if module has its own printing directory (core/modules/printing)
+            'printing' => 0,
+            // Set this to 1 if module has its own theme directory (theme)
+            'theme' => 0,
+            // Set this to relative path of css file if module has its own css file
+            'css' => array(
+                // '/mfa/css/mfa.css.php',
+            ),
+            // Set this to relative path of js file if module must load a js on all pages
+            'js' => array(
+                //'/mfa/js/mfa.js.php',
+            ),
             'hooks' => array('mainloginpage', 'login', 'usercard', 'globalcard'),
-            'login' => array('mfa' => '/mfa/core/login/functions_mfa.php'),
+            // 'login' => array('mfa' => '/mfa/core/login/functions_mfa.php'),
+            // Set this to 1 if features of module are opened to external users
+            'moduleforexternal' => 0,
+            // Set this to 1 if the module provides a website template into doctemplates/websites/website_template-mytemplate
+            'websitetemplates' => 0
         );
 
         $this->dirs = array('/mfa');
