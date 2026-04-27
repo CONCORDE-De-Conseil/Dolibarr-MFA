@@ -121,6 +121,7 @@ langs/ar_SA/mfa.lang
 ## الملكية
 
 Copyright (C) 2026 CONCORDE de Conseil [contact@concorde.tn](mailto:contact@concorde.tn)
+
 Copyright (C) 2026 Ali WERGHEMMI [ali.werghemmi@concorde.tn](mailto:ali.werghemmi@concorde.tn)
 
 موقع الشركة: [https://www.concorde.tn](https://www.concorde.tn)
