@@ -1,96 +1,128 @@
 # MFA FOR [DOLIBARR ERP & CRM](https://www.dolibarr.org)
 
+Multi-Factor Authentication module for Dolibarr using TOTP-compatible authenticator applications such as Google Authenticator, Microsoft Authenticator, Authy, or FreeOTP.
+
+## Overview
+
+This module adds a second authentication step after the standard Dolibarr password check.
+When MFA is enabled for a user:
+
+- the user enters the usual Dolibarr login and password
+- Dolibarr asks for a 6-digit TOTP code
+- access is granted only after the OTP code is validated
+
+The module also provides:
+
+- MFA enrollment from the Dolibarr user card
+- QR code provisioning for authenticator apps
+- enable and disable actions for each user
+- failed-attempt tracking for both login and setup verification
+- an admin-only history page to review lockouts and reset blocked users
+
 ## Features
 
-Description of the module...
-
-<!--
-![Screenshot mfa](img/screenshot_mfa.png?raw=true "MFA"){imgmd}
--->
-
-Other external modules are available on [Dolistore.com](https://www.dolistore.com).
-
-## Translations
-
-Translations can be completed manually by editing files in the module directories under `langs`.
-
-<!--
-This module contains also a sample configuration for Transifex, under the hidden directory [.tx](.tx), so it is possible to manage translation using this service.
-
-For more information, see the [translator's documentation](https://wiki.dolibarr.org/index.php/Translator_documentation).
-
-There is a [Transifex project](https://transifex.com/projects/p/dolibarr-module-template) for this module.
--->
-
+- TOTP secret generation compatible with standard authenticator apps
+- QR code provisioning URI for quick enrollment
+- MFA challenge on login for users with MFA enabled
+- User-card interface to enroll and activate MFA
+- Admin interface for MFA attempt history and lock reset
+- CSRF-protected setup and state-change actions
+- Lockout handling after repeated invalid MFA codes
 
 ## Installation
 
-Prerequisites: You must have Dolibarr ERP & CRM software installed. You can download it from [Dolistore.org](https://www.dolibarr.org).
-You can also get a ready-to-use instance in the cloud from https://saas.dolibarr.org
+Prerequisite: Dolibarr ERP & CRM must already be installed.
 
+For project inquiries or deployment assistance:
 
-### From the ZIP file and GUI interface
+- Contact: [contact@concorde.tn](mailto:contact@concorde.tn)
+- Developer: [ali.werghemmi@concorde.tn](mailto:ali.werghemmi@concorde.tn)
+- Website: [https://www.concorde.tn](https://www.concorde.tn)
 
-If the module is a ready-to-deploy zip file, so with a name `module_xxx-version.zip` (e.g., when downloading it from a marketplace like [Dolistore](https://www.dolistore.com)),
-go to menu `Home> Setup> Modules> Deploy external module` and upload the zip file.
+### From a ZIP package
 
-<!--
+If you have a packaged archive such as `module_mfa-1.0.zip`:
 
-Note: If this screen tells you that there is no "custom" directory, check that your setup is correct:
+1. Log in to Dolibarr as a super-administrator.
+2. Go to `Home > Setup > Modules/Applications > Deploy/Install external module`.
+3. Upload the archive.
+4. Enable the `MFA` module from the modules list.
 
-- In your Dolibarr installation directory, edit the `htdocs/conf/conf.php` file and check that following lines are not commented:
+### Manual installation
 
-    ```php
-    //$dolibarr_main_url_root_alt ...
-    //$dolibarr_main_document_root_alt ...
-    ```
+Copy the `mfa` directory into your Dolibarr custom modules directory:
 
-- Uncomment them if necessary (delete the leading `//`) and assign the proper value according to your Dolibarr installation
-
-    For example :
-
-    - UNIX:
-        ```php
-        $dolibarr_main_url_root_alt = '/custom';
-        $dolibarr_main_document_root_alt = '/var/www/Dolibarr/htdocs/custom';
-        ```
-
-    - Windows:
-        ```php
-        $dolibarr_main_url_root_alt = '/custom';
-        $dolibarr_main_document_root_alt = 'C:/My Web Sites/Dolibarr/htdocs/custom';
-        ```
--->
-
-<!--
-
-### From a GIT repository
-
-Clone the repository in `$dolibarr_main_document_root_alt/mfa`
-
-```shell
-cd ....../custom
-git clone git@github.com:gitlogin/mfa.git mfa
+```bash
+htdocs/custom/mfa
 ```
 
--->
+Then:
 
-### Final steps
+1. Log in to Dolibarr as a super-administrator.
+2. Open `Home > Setup > Modules/Applications`.
+3. Enable the `MFA` module.
+4. If you are upgrading an existing installation, run the module update so the MFA attempt history tables are created.
 
-Using your browser:
+## Usage
 
-  - Log into Dolibarr as a super-administrator
-  - Go to "Setup"> "Modules"
-  - You should now be able to find and enable the module
+### Enroll a user
 
+1. Open the user card of the target user.
+2. Click `Setup MFA`.
+3. Scan the QR code with an authenticator application.
+4. Enter the 6-digit verification code.
+5. Click `Verify and Enable`.
 
+### Login flow
 
-## Licenses
+1. The user enters login and password as usual.
+2. If MFA is enabled, Dolibarr prompts for the authenticator code.
+3. After successful verification, the user is logged in.
+
+### Reset a locked user
+
+1. Log in as an administrator.
+2. Open the MFA admin page for attempt history.
+3. Find the affected user in the current state list.
+4. Click `Reset` to clear the lock or failed-attempt state.
+
+## Attempt History
+
+The module keeps persistent MFA failure and lock information for:
+
+- login verification failures
+- MFA setup verification failures
+
+Administrators can review:
+
+- current failed-attempt counters
+- lock expiration times
+- source IP addresses
+- recent history of failure, lock, reset, and success events
+
+## Translations
+
+Translations can be adjusted by editing the language files under:
+
+```text
+langs/en_US/mfa.lang
+langs/fr_FR/mfa.lang
+langs/ar_SA/mfa.lang
+```
+
+## Ownership
+
+Copyright (C) 2026 CONCORDE de Conseil [contact@concorde.tn](mailto:contact@concorde.tn)  
+Copyright (C) 2026 Ali WERGHEMMI [ali.werghemmi@concorde.tn](mailto:ali.werghemmi@concorde.tn)
+
+Company website: [https://www.concorde.tn](https://www.concorde.tn)
+
+## License
 
 ### Main code
 
-GPLv3 or (at your option) any later version. See file COPYING for more information.
+GPLv3 or any later version. See [COPYING](COPYING).
 
 ### Documentation
 
-All texts and readme's are licensed under [GFDL](https://www.gnu.org/licenses/fdl-1.3.en.html).
+This README and the module documentation are distributed with the module repository for project use and maintenance.

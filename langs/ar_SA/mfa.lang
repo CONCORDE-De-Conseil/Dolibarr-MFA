@@ -1,0 +1,74 @@
+# Translation file
+
+#
+# Generic
+#
+
+# Module label 'ModuleMFAName'
+ModuleMFAName = MFA
+# Module description 'ModuleMFADesc'
+ModuleMFADesc = المصادقة متعددة العوامل لمستخدمي دوليبار باستخدام TOTP
+
+#
+# Admin page
+#
+MFASetup = إعداد MFA
+Settings = الإعدادات
+MFASetupPage = صفحة إعداد MFA
+NewSection = قسم جديد
+
+#
+# About page
+#
+About = حول
+MFAAbout = حول MFA
+MFAAboutPage = صفحة حول MFA
+MFAAttempts = محاولات MFA
+MFAAttemptsPage = سجل محاولات MFA
+
+#
+# Sample page
+#
+MFAArea = الصفحة الرئيسية لـ MFA
+
+# MFA
+MFACode = رمز MFA
+OTPCode = رمز OTP
+MFAVerification = التحقق من MFA
+MFADisabled = تم تعطيل MFA.
+IfEnabled = إذا كان مفعلاً
+MFAStatus = حالة MFA
+SetupMFA = إعداد MFA
+MFAQRCode = رمز QR لـ MFA
+MFASecret = سر MFA
+ScanThisUri = امسح رمز QR أو هذا الرابط باستخدام تطبيق المصادقة
+EnterVerifyCode = أدخل رمز التحقق
+VerifyAndEnable = تحقق وفعّل
+MFACodeRequired = رمز MFA مطلوب.
+EnterMFACode = يرجى إدخال رمز التحقق المكوّن من 6 أرقام من تطبيق المصادقة.
+InvalidMFACode = رمز MFA غير صالح. يرجى المحاولة مرة أخرى.
+MFAPendingChallenge = توجد جلسة تسجيل دخول بانتظار تأكيد MFA.
+MFAContinueAs = المتابعة باسم %s؟
+MFASessionDestroyed = تم حذف جلسة MFA المعلقة.
+Verify = تحقق
+MFAEnabled = تم تفعيل MFA.
+InvalidCode = رمز غير صالح. يرجى المحاولة مرة أخرى.
+MFATooManyLoginAttempts = هناك عدد كبير من رموز MFA غير الصالحة. يرجى المحاولة لاحقاً.
+MFATooManySetupAttempts = هناك عدد كبير من محاولات التحقق غير الصالحة أثناء إعداد MFA. يرجى المحاولة لاحقاً.
+MFASecretNotAvailable = سر MFA غير متوفر لهذا المستخدم.
+MFAAttemptScope = النطاق
+MFAAttemptCount = المحاولات الفاشلة
+MFALastAttempt = آخر محاولة
+MFALockedUntil = مقفل حتى
+MFALastIP = آخر عنوان IP
+MFAResetAttempts = إعادة تعيين
+MFAAttemptsResetDone = تمت إعادة تعيين سجل محاولات MFA للمستخدم المحدد.
+MFAOnlyLockedUsers = عرض المستخدمين المقفلين فقط
+MFANoAttemptData = لم يتم العثور على سجل لمحاولات MFA.
+MFAAttemptLogin = تسجيل الدخول
+MFAAttemptSetup = الإعداد
+MFAAttemptEvent = الحدث
+MFAAttemptFailure = رمز فاشل
+MFAAttemptLock = مقفل
+MFAAttemptReset = أُعيد تعيينه بواسطة المسؤول
+MFAAttemptSuccess = تم التحقق بنجاح

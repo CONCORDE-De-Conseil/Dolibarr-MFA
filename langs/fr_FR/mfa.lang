@@ -1,0 +1,74 @@
+# Translation file
+
+#
+# Generic
+#
+
+# Module label 'ModuleMFAName'
+ModuleMFAName = MFA
+# Module description 'ModuleMFADesc'
+ModuleMFADesc = Authentification multifacteur pour les utilisateurs Dolibarr avec TOTP
+
+#
+# Admin page
+#
+MFASetup = Configuration MFA
+Settings = Paramètres
+MFASetupPage = Page de configuration MFA
+NewSection = Nouvelle section
+
+#
+# About page
+#
+About = À propos
+MFAAbout = À propos de MFA
+MFAAboutPage = Page à propos de MFA
+MFAAttempts = Tentatives MFA
+MFAAttemptsPage = Historique des tentatives MFA
+
+#
+# Sample page
+#
+MFAArea = Accueil MFA
+
+# MFA
+MFACode = Code MFA
+OTPCode = Code OTP
+MFAVerification = Vérification MFA
+MFADisabled = La MFA a été désactivée.
+IfEnabled = si activé
+MFAStatus = Statut MFA
+SetupMFA = Configurer la MFA
+MFAQRCode = QR code MFA
+MFASecret = Secret MFA
+ScanThisUri = Scannez ce QR code ou cet URI avec votre application d'authentification
+EnterVerifyCode = Saisir le code de vérification
+VerifyAndEnable = Vérifier et activer
+MFACodeRequired = Le code MFA est obligatoire.
+EnterMFACode = Veuillez saisir le code de vérification à 6 chiffres de votre application d'authentification.
+InvalidMFACode = Code MFA invalide. Veuillez réessayer.
+MFAPendingChallenge = Une session de connexion attend une confirmation MFA.
+MFAContinueAs = Continuer en tant que %s ?
+MFASessionDestroyed = La session MFA en attente a été supprimée.
+Verify = Vérifier
+MFAEnabled = La MFA a été activée.
+InvalidCode = Code invalide. Veuillez réessayer.
+MFATooManyLoginAttempts = Trop de codes MFA invalides. Veuillez réessayer plus tard.
+MFATooManySetupAttempts = Trop de tentatives invalides lors de la configuration MFA. Veuillez réessayer plus tard.
+MFASecretNotAvailable = Le secret MFA n'est pas disponible pour cet utilisateur.
+MFAAttemptScope = Portée
+MFAAttemptCount = Tentatives échouées
+MFALastAttempt = Dernière tentative
+MFALockedUntil = Bloqué jusqu'à
+MFALastIP = Dernière IP
+MFAResetAttempts = Réinitialiser
+MFAAttemptsResetDone = L'historique des tentatives MFA a été réinitialisé pour l'utilisateur sélectionné.
+MFAOnlyLockedUsers = Afficher uniquement les utilisateurs bloqués
+MFANoAttemptData = Aucun historique de tentative MFA trouvé.
+MFAAttemptLogin = Connexion
+MFAAttemptSetup = Configuration
+MFAAttemptEvent = Événement
+MFAAttemptFailure = Code invalide
+MFAAttemptLock = Bloqué
+MFAAttemptReset = Réinitialisé par l'administrateur
+MFAAttemptSuccess = Vérification réussie

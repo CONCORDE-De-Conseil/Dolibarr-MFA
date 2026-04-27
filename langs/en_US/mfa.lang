@@ -7,7 +7,7 @@
 # Module label 'ModuleMFAName'
 ModuleMFAName = MFA
 # Module description 'ModuleMFADesc'
-ModuleMFADesc = MFA description
+ModuleMFADesc = Multi-Factor Authentication for Dolibarr users using TOTP
 
 #
 # Admin page
@@ -15,11 +15,7 @@ ModuleMFADesc = MFA description
 MFASetup = MFA setup
 Settings = Settings
 MFASetupPage = MFA setup page
-NewSection=New section
-MFA_MYPARAM1 = My param 1
-MFA_MYPARAM1Tooltip = My param 1 tooltip
-MFA_MYPARAM2=My param 2
-MFA_MYPARAM2Tooltip=My param 2 tooltip
+NewSection = New section
 
 
 #
@@ -35,13 +31,6 @@ MFAAttemptsPage = MFA attempts history
 # Sample page
 #
 MFAArea = Home MFA
-MyPageName = My page name
-
-#
-# Sample widget
-#
-MyWidget = My widget
-MyWidgetDescription = My widget description
 
 # MFA
 MFACode = MFA Code
