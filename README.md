@@ -6,16 +6,13 @@ Multi-Factor Authentication module for Dolibarr using TOTP-compatible authentica
 
 - user card with `Setup MFA`, QR code, secret, and verification field
 
-
 ![MFA user setup](img/screenshot_mfa_user_setup.jpg "MFA user setup")
 
 - login page showing the MFA code prompt
 
-
 ![MFA login challenge](img/screenshot_mfa_login_challenge.jpg "MFA login challenge")
 
 - admin page with MFA failed-attempt history and reset actions
-
 
 ![MFA attempt history](img/screenshot_mfa_attempt_history.jpg "MFA attempt history")
 
@@ -49,6 +46,7 @@ The module also provides:
 ## Installation
 
 Prerequisite: Dolibarr ERP & CRM must already be installed.
+Important: set `$dolibarr_main_authentication = 'mfa';` in `conf.php`.
 
 For project inquiries or deployment assistance:
 

@@ -40,6 +40,7 @@ Le module fournit également :
 ## Installation
 
 Prérequis : Dolibarr ERP & CRM doit déjà être installé.
+Important : définissez `$dolibarr_main_authentication = 'mfa';` dans `conf.php`.
 
 Pour toute demande de projet ou d'assistance au déploiement :
 
