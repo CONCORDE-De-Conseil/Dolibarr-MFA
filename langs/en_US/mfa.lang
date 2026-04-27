@@ -28,6 +28,8 @@ MFA_MYPARAM2Tooltip=My param 2 tooltip
 About = About
 MFAAbout = About MFA
 MFAAboutPage = MFA about page
+MFAAttempts = MFA attempts
+MFAAttemptsPage = MFA attempts history
 
 #
 # Sample page
@@ -63,3 +65,22 @@ MFASessionDestroyed = Pending MFA session has been destroyed.
 Verify = Verify
 MFAEnabled = MFA has been enabled.
 InvalidCode = Invalid code. Please try again.
+MFATooManyLoginAttempts = Too many invalid MFA codes. Please try again later.
+MFATooManySetupAttempts = Too many invalid MFA setup verification attempts. Please try again later.
+MFASecretNotAvailable = MFA secret is not available for this user.
+MFAAttemptScope = Scope
+MFAAttemptCount = Failed attempts
+MFALastAttempt = Last attempt
+MFALockedUntil = Locked until
+MFALastIP = Last IP
+MFAResetAttempts = Reset
+MFAAttemptsResetDone = MFA attempt history has been reset for the selected user.
+MFAOnlyLockedUsers = Show only locked users
+MFANoAttemptData = No MFA attempt history found.
+MFAAttemptLogin = Login
+MFAAttemptSetup = Setup
+MFAAttemptEvent = Event
+MFAAttemptFailure = Failed code
+MFAAttemptLock = Locked
+MFAAttemptReset = Reset by admin
+MFAAttemptSuccess = Successful verification

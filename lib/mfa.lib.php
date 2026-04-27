@@ -1,5 +1,6 @@
 <?php
-/* Copyright (C) 2026		Alice Adminson				<laurent@destailleur.fr>
+/* Copyright (C) 2026		CONCORDE de Conseil		<contact@concorde.tn>
+ * Copyright (C) 2026       Ali WERGHEMMI           <ali.werghemmi@concorde.tn>
  * Copyright (C) 2025       Frédéric France         <frederic.france@free.fr>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,23 +30,28 @@
  */
 function mfaAdminPrepareHead()
 {
-	global $langs, $conf;
+    global $langs, $conf;
 
-	// global $db;
-	// $extrafields = new ExtraFields($db);
-	// $extrafields->fetch_name_optionals_label('myobject');
+    // global $db;
+    // $extrafields = new ExtraFields($db);
+    // $extrafields->fetch_name_optionals_label('myobject');
 
-	$langs->load("mfa@mfa");
+    $langs->load("mfa@mfa");
 
-	$h = 0;
-	$head = array();
+    $h = 0;
+    $head = array();
 
-	$head[$h][0] = dolBuildUrl(dol_buildpath("/mfa/admin/setup.php", 1));
-	$head[$h][1] = $langs->trans("Settings");
-	$head[$h][2] = 'settings';
-	$h++;
+    $head[$h][0] = dolBuildUrl(dol_buildpath("/mfa/admin/setup.php", 1));
+    $head[$h][1] = $langs->trans("Settings");
+    $head[$h][2] = 'settings';
+    $h++;
 
-	/*
+    $head[$h][0] = dolBuildUrl(dol_buildpath("/mfa/admin/attempts.php", 1));
+    $head[$h][1] = $langs->trans("MFAAttempts");
+    $head[$h][2] = 'attempts';
+    $h++;
+
+    /*
 	$head[$h][0] = dolBuildUrl(dol_buildpath("/mfa/admin/myobject_extrafields.php", 1));
 	$head[$h][1] = $langs->trans("ExtraFields");
 	$nbExtrafields = (isset($extrafields->attributes['myobject']['label']) && is_countable($extrafields->attributes['myobject']['label'])) ? count($extrafields->attributes['myobject']['label']) : 0;
@@ -65,22 +71,22 @@ function mfaAdminPrepareHead()
 	$h++;
 	*/
 
-	$head[$h][0] = dolBuildUrl(dol_buildpath("/mfa/admin/about.php", 1));
-	$head[$h][1] = $langs->trans("About");
-	$head[$h][2] = 'about';
-	$h++;
+    $head[$h][0] = dolBuildUrl(dol_buildpath("/mfa/admin/about.php", 1));
+    $head[$h][1] = $langs->trans("About");
+    $head[$h][2] = 'about';
+    $h++;
 
-	// Show more tabs from modules
-	// Entries must be declared in modules descriptor with line
-	//$this->tabs = array(
-	//	'entity:+tabname:Title:@mfa:/mfa/mypage.php?id=__ID__'
-	//); // to add new tab
-	//$this->tabs = array(
-	//	'entity:-tabname:Title:@mfa:/mfa/mypage.php?id=__ID__'
-	//); // to remove a tab
-	complete_head_from_modules($conf, $langs, null, $head, $h, 'mfa@mfa');
+    // Show more tabs from modules
+    // Entries must be declared in modules descriptor with line
+    //$this->tabs = array(
+    //	'entity:+tabname:Title:@mfa:/mfa/mypage.php?id=__ID__'
+    //); // to add new tab
+    //$this->tabs = array(
+    //	'entity:-tabname:Title:@mfa:/mfa/mypage.php?id=__ID__'
+    //); // to remove a tab
+    complete_head_from_modules($conf, $langs, null, $head, $h, 'mfa@mfa');
 
-	complete_head_from_modules($conf, $langs, null, $head, $h, 'mfa@mfa', 'remove');
+    complete_head_from_modules($conf, $langs, null, $head, $h, 'mfa@mfa', 'remove');
 
-	return $head;
+    return $head;
 }

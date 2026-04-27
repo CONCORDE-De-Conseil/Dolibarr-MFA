@@ -1,5 +1,22 @@
 <?php
-/* Copyright (C) 2026 Your Name */
+/* Copyright (C) 2026		CONCORDE de Conseil				<contact@concorde.tn>
+ * Copyright (C) 2026       Ali WERGHEMMI                   <ali.werghemmi@concorde.tn>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+require_once dol_buildpath('/mfa/class/mfaattemptservice.class.php');
 
 /**
  * Authentication function for MFA module
@@ -12,6 +29,9 @@
 function check_user_password_mfa($login, $password, $entity)
 {
     global $db, $conf, $langs; // Add $langs to use for messages
+
+    $maxAttempts = 5;
+    $cooldown = 300;
 
     if (!is_object($db)) {
         return 0;
@@ -74,9 +94,21 @@ function check_user_password_mfa($login, $password, $entity)
     // 1. Check if MFA is enabled
     require_once dol_buildpath('/mfa/class/mfaservice.class.php');
     $mfaService = new MFAService($db);
+    $attemptService = new MFAAttemptService($db);
     $mfa = $mfaService->getForUser($userstatic->id, $challengeEntity);
 
     if ($mfa && $mfa->enabled) {
+        $cooldownRemaining = $attemptService->getCooldownRemaining($userstatic->id, $challengeEntity, MFAAttemptService::SCOPE_LOGIN);
+        if ($cooldownRemaining > 0) {
+            $langs->load("mfa@mfa");
+            $_SESSION["dol_loginmesg"] = $langs->trans("MFATooManyLoginAttempts");
+            $_SESSION["dol_mfa_challenge_user_id"] = $userstatic->id;
+            $_SESSION["dol_mfa_challenge_login"] = $challengeLogin;
+            $_SESSION["dol_mfa_challenge_entity"] = $challengeEntity;
+            $_SESSION["dol_mfa_password_verified"] = true;
+
+            return '--bad-login-validity--';
+        }
 
         $otpCode = GETPOST('mfa_code', 'alphanohtml');
         if (empty($otpCode)) {
@@ -100,10 +132,19 @@ function check_user_password_mfa($login, $password, $entity)
             $_SESSION["dol_mfa_challenge_login"] = $challengeLogin;
             $_SESSION["dol_mfa_challenge_entity"] = $challengeEntity;
             $_SESSION["dol_mfa_password_verified"] = true;
+            $attemptService->recordFailedAttempt(
+                $userstatic->id,
+                $challengeEntity,
+                MFAAttemptService::SCOPE_LOGIN,
+                $maxAttempts,
+                $cooldown,
+                empty($_SERVER['REMOTE_ADDR']) ? '' : $_SERVER['REMOTE_ADDR']
+            );
 
             return '--bad-login-validity--';
         }
 
+        $attemptService->markSuccessfulAttempt($userstatic->id, $challengeEntity, MFAAttemptService::SCOPE_LOGIN, empty($_SERVER['REMOTE_ADDR']) ? '' : $_SERVER['REMOTE_ADDR']);
         unset($_SESSION["dol_mfa_challenge_user_id"]);
         unset($_SESSION["dol_mfa_challenge_login"]);
         unset($_SESSION["dol_mfa_password_verified"]);

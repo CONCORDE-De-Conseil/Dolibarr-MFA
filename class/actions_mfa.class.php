@@ -1,6 +1,7 @@
 <?php
 /* Copyright (C) 2023		Laurent Destailleur			<eldy@users.sourceforge.net>
- * Copyright (C) 2026		Alice Adminson				<laurent@destailleur.fr>
+ * Copyright (C) 2026		CONCORDE de Conseil				<contact@concorde.tn>
+ * Copyright (C) 2026		Ali WERGHEMMI				<ali.werghemmi@concorde.tn>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,20 +27,14 @@
 
 require_once DOL_DOCUMENT_ROOT . '/core/class/commonhookactions.class.php';
 require_once dol_buildpath('/mfa/class/mfaservice.class.php');
+require_once dol_buildpath('/mfa/class/mfaattemptservice.class.php');
 
 /**
  * Class ActionsMFA
  */
 class ActionsMFA extends CommonHookActions
 {
-    /**
-     * @var int Maximum number of invalid MFA setup verification attempts before cooldown.
-     */
     const MFA_SETUP_MAX_ATTEMPTS = 5;
-
-    /**
-     * @var int Cooldown duration in seconds after too many invalid setup attempts.
-     */
     const MFA_SETUP_COOLDOWN = 300;
 
     /**
@@ -109,65 +104,6 @@ class ActionsMFA extends CommonHookActions
         }
 
         return hash_equals((string) currentToken(), $token);
-    }
-
-    /**
-     * Build the session key used to track MFA setup verification attempts.
-     *
-     * @param int $userId Target user identifier.
-     * @return string     Session array key.
-     */
-    private function getMfaAttemptSessionKey($userId)
-    {
-        return 'dol_mfa_setup_attempts_' . ((int) $userId);
-    }
-
-    /**
-     * Return the remaining cooldown in seconds for MFA verification attempts.
-     *
-     * @param int $userId Target user identifier.
-     * @return int        Remaining cooldown time, or 0 when not locked.
-     */
-    private function getMfaAttemptCooldownRemaining($userId)
-    {
-        $state = empty($_SESSION[$this->getMfaAttemptSessionKey($userId)]) ? array() : $_SESSION[$this->getMfaAttemptSessionKey($userId)];
-        $lockedUntil = empty($state['locked_until']) ? 0 : (int) $state['locked_until'];
-        $remaining = $lockedUntil - time();
-
-        return max(0, $remaining);
-    }
-
-    /**
-     * Record a failed MFA verification attempt and apply cooldown when needed.
-     *
-     * @param int $userId Target user identifier.
-     * @return int        Remaining cooldown in seconds after recording the failure.
-     */
-    private function registerFailedMfaAttempt($userId)
-    {
-        $sessionKey = $this->getMfaAttemptSessionKey($userId);
-        $state = empty($_SESSION[$sessionKey]) ? array('count' => 0, 'locked_until' => 0) : $_SESSION[$sessionKey];
-        $state['count'] = empty($state['count']) ? 1 : ((int) $state['count'] + 1);
-
-        if ($state['count'] >= self::MFA_SETUP_MAX_ATTEMPTS) {
-            $state['count'] = 0;
-            $state['locked_until'] = time() + self::MFA_SETUP_COOLDOWN;
-        }
-
-        $_SESSION[$sessionKey] = $state;
-
-        return $this->getMfaAttemptCooldownRemaining($userId);
-    }
-
-    /**
-     * Clear MFA verification attempt tracking for the target user.
-     *
-     * @param int $userId Target user identifier.
-     * @return void
-     */
-    private function resetFailedMfaAttempts($userId)
-    {
-        unset($_SESSION[$this->getMfaAttemptSessionKey($userId)]);
     }
 
     /**
@@ -393,6 +329,7 @@ class ActionsMFA extends CommonHookActions
 
             if ($action == 'disablemfa') {
                 $mfaService = new MFAService($this->db);
+                $attemptService = new MFAAttemptService($this->db);
                 if (!$this->canManageMfaForUser($user, $currentUser)) {
                     setEventMessages($langs->trans("ErrorForbidden"), null, 'errors');
                     return 0;
@@ -403,13 +340,14 @@ class ActionsMFA extends CommonHookActions
                 }
                 if ($user->admin || $user->id == $currentUser->id) {
                     $mfaService->disableForUser($currentUser);
-                    $this->resetFailedMfaAttempts($currentUser->id);
+                    $attemptService->resetAttempts($currentUser->id, $currentUser->entity, MFAAttemptService::SCOPE_SETUP, (int) $user->id);
                     setEventMessages($langs->trans("MFADisabled"), null, 'mesgs');
                 }
             }
 
             if ($action == 'enablemfa') {
                 $mfaService = new MFAService($this->db);
+                $attemptService = new MFAAttemptService($this->db);
                 if (!$this->canManageMfaForUser($user, $currentUser)) {
                     setEventMessages($langs->trans("ErrorForbidden"), null, 'errors');
                     return 0;
@@ -419,15 +357,15 @@ class ActionsMFA extends CommonHookActions
                     return 0;
                 }
 
-                $cooldownRemaining = $this->getMfaAttemptCooldownRemaining($currentUser->id);
+                $cooldownRemaining = $attemptService->getCooldownRemaining($currentUser->id, $currentUser->entity, MFAAttemptService::SCOPE_SETUP);
                 if ($cooldownRemaining > 0) {
-                    setEventMessages('Too many invalid MFA verification attempts. Please try again later.', null, 'errors');
+                    setEventMessages($langs->trans("MFATooManySetupAttempts"), null, 'errors');
                     return 0;
                 }
 
                 $mfa = $mfaService->getForUser($currentUser->id, $currentUser->entity);
                 if (!$mfa || empty($mfa->secret)) {
-                    setEventMessages('MFA secret is not available for this user.', null, 'errors');
+                    setEventMessages($langs->trans("MFASecretNotAvailable"), null, 'errors');
                     return 0;
                 }
 
@@ -435,10 +373,17 @@ class ActionsMFA extends CommonHookActions
                 $code = GETPOST('mfa_verif', 'alphanohtml');
                 if ($mfaService->verifyCode($secret, $code)) {
                     $mfaService->enableMFA($currentUser);
-                    $this->resetFailedMfaAttempts($currentUser->id);
+                    $attemptService->markSuccessfulAttempt($currentUser->id, $currentUser->entity, MFAAttemptService::SCOPE_SETUP, empty($_SERVER['REMOTE_ADDR']) ? '' : $_SERVER['REMOTE_ADDR']);
                     setEventMessages($langs->trans("MFAEnabled"), null, 'mesgs');
                 } else {
-                    $this->registerFailedMfaAttempt($currentUser->id);
+                    $attemptService->recordFailedAttempt(
+                        $currentUser->id,
+                        $currentUser->entity,
+                        MFAAttemptService::SCOPE_SETUP,
+                        self::MFA_SETUP_MAX_ATTEMPTS,
+                        self::MFA_SETUP_COOLDOWN,
+                        empty($_SERVER['REMOTE_ADDR']) ? '' : $_SERVER['REMOTE_ADDR']
+                    );
                     setEventMessages($langs->trans("InvalidCode"), null, 'errors');
                 }
             }
