@@ -196,81 +196,84 @@ class ActionsMFA extends CommonHookActions
         if (!in_array('usercard', $hookmanager->contextarray)) {
             return 0;
         }
+        if ($parameters['currentcontext'] == 'usercard' && $action != 'create') {
+            global $langs, $user;
 
-        global $langs, $user;
+            $langs->load("mfa@mfa");
+            $mfaService = new MFAService($this->db);
 
-        $langs->load("mfa@mfa");
-        $mfaService = new MFAService($this->db);
+            $id = GETPOST('id', 'int');
+            $currentAction = GETPOST('action', 'alpha');
+            $currentUser = new User($this->db);
+            $currentUser->fetch($id);
 
-        $id = GETPOST('id', 'int');
-        $currentAction = GETPOST('action', 'alpha');
-        $currentUser = new User($this->db);
-        $currentUser->fetch($id);
+            $mfa = $mfaService->getForUser($object->id, $object->entity);
 
-        $mfa = $mfaService->getForUser($object->id, $object->entity);
+            // 🔐 Ensure secret exists (ONLY when needed)
+            if ($currentAction === 'setupmfa') {
+                // If we are in setup mode, we only generate a new secret if the user doesn't already have an unconfirmed one
+                if (!$mfa || empty($mfa->secret)) {
+                    $secret = $mfaService->generateSecret();
+                    $mfaService->createOrUpdateSecret($currentUser, $secret, 0);
+                    // Reload MFA to get the newly created secret
+                    $mfa = $mfaService->getForUser($currentUser->id, $currentUser->entity);
+                } else {
+                    $secret = dolDecrypt($mfa->secret);
+                }
+            }
 
-        // 🔐 Ensure secret exists (ONLY when needed)
-        if ($currentAction === 'setupmfa') {
-            // If we are in setup mode, we only generate a new secret if the user doesn't already have an unconfirmed one
-            if (!$mfa || empty($mfa->secret)) {
-                $secret = $mfaService->generateSecret();
-                $mfaService->createOrUpdateSecret($currentUser, $secret, 0);
-                // Reload MFA to get the newly created secret
-                $mfa = $mfaService->getForUser($currentUser->id, $currentUser->entity);
+            print '<!-- Begin MFA Section -->';
+
+            // 🔹 Status row
+            print '<tr class="trextrafields"><td class="titlefield">' . $langs->trans("MFAStatus") . '</td><td>';
+
+            if ($mfa && $mfa->enabled) {
+                print '<span class="badge badge-status status4">' . $langs->trans("Enabled") . '</span>';
+
+                if ($user->admin || $user->id == $currentUser->id) {
+                    print ' <a class="butActionDelete" href="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=disablemfa&token=' . newToken() . '">' . $langs->trans("Disable") . '</a>';
+                }
             } else {
-                $secret = dolDecrypt($mfa->secret);
-            }
-        }
+                print '<span class="badge badge-status status5">' . $langs->trans("Disabled") . '</span>';
 
-        print '<!-- MFA Section -->';
-
-        // 🔹 Status row
-        print '<tr class="trextrafields"><td class="titlefield">' . $langs->trans("MFAStatus") . '</td><td>';
-
-        if ($mfa && $mfa->enabled) {
-            print '<span class="badge badge-status status4">' . $langs->trans("Enabled") . '</span>';
-
-            if ($user->admin || $user->id == $currentUser->id) {
-                print ' <a class="butActionDelete" href="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=disablemfa&token=' . newToken() . '">' . $langs->trans("Disable") . '</a>';
-            }
-        } else {
-            print '<span class="badge badge-status status5">' . $langs->trans("Disabled") . '</span>';
-
-            if ($user->admin || $user->id == $currentUser->id) {
-                print ' <a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=setupmfa&token=' . newToken() . '">' . $langs->trans("SetupMFA") . '</a>';
-            }
-        }
-
-        print '</td></tr>';
-        // 🔹 Setup screen
-        if ($currentAction === 'setupmfa' && $mfa) {
-
-            $secret = dolDecrypt($mfa->secret);
-            $uri = $mfaService->getProvisioningUri($currentUser->login, $secret);
-
-            $qrurl = DOL_URL_ROOT . '/viewimage.php?modulepart=barcode&generator=tcpdfbarcode&encoding=QRCODE&code=' . urlencode($uri);
-
-            print '<tr class="trextrafields">';
-            print '<td class="titlefield">' . $langs->trans("MFAQRCode") . '</td>';
-            print '<td><img src="' . $qrurl . '" alt="QR Code"></td>';
-            print '</tr>';
-
-            print '<tr class="trextrafields">';
-            print '<td class="titlefield">' . $langs->trans("MFASecret") . '</td>';
-            print '<td>';
-
-            print '<code>' . dol_escape_htmltag($secret) . '</code><br>';
-            print '<div class="opacitymedium small">' . dol_escape_htmltag($uri) . '</div>';
-
-            if (empty($mfa->enabled)) {
-                print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=enablemfa&token=' . newToken() . '">';
-
-                print '<input type="text" name="mfa_verif" maxlength="6" placeholder="' . $langs->trans("EnterVerifyCode") . '" class="flat"> ';
-                print '<input type="submit" class="button" value="' . $langs->trans("VerifyAndEnable") . '">';
-                print '</form>';
+                if ($user->admin || $user->id == $currentUser->id) {
+                    print ' <a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=setupmfa&token=' . newToken() . '">' . $langs->trans("SetupMFA") . '</a>';
+                }
             }
 
             print '</td></tr>';
+            // 🔹 Setup screen
+            if ($currentAction === 'setupmfa' && $mfa) {
+
+                $secret = dolDecrypt($mfa->secret);
+                $uri = $mfaService->getProvisioningUri($currentUser->login, $secret);
+
+                $qrurl = DOL_URL_ROOT . '/viewimage.php?modulepart=barcode&generator=tcpdfbarcode&encoding=QRCODE&code=' . urlencode($uri);
+
+                print '<tr class="trextrafields">';
+                print '<td class="titlefield">' . $langs->trans("MFAQRCode") . '</td>';
+                print '<td><img src="' . $qrurl . '" alt="QR Code"></td>';
+                print '</tr>';
+
+                print '<tr class="trextrafields">';
+                print '<td class="titlefield">' . $langs->trans("MFASecret") . '</td>';
+                print '<td>';
+
+                print '<code>' . dol_escape_htmltag($secret) . '</code><br>';
+                print '<div class="opacitymedium small">' . dol_escape_htmltag($uri) . '</div>';
+
+                if (empty($mfa->enabled)) {
+                    print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=enablemfa&token=' . newToken() . '">';
+
+                    print '<input type="text" name="mfa_verif" maxlength="6" placeholder="' . $langs->trans("EnterVerifyCode") . '" class="flat"> ';
+                    print '<input type="submit" class="button" value="' . $langs->trans("VerifyAndEnable") . '">';
+                    print '</form>';
+                }
+
+                print '</td></tr>';
+            }
+
+            print '<!-- End MFA Section -->';
         }
 
         return 0;
@@ -280,25 +283,31 @@ class ActionsMFA extends CommonHookActions
     {
         global $langs, $user;
 
-        if ($action == 'disablemfa') {
-            $mfaService = new MFAService($this->db);
-            if ($user->admin || $user->id == $object->id) {
-                $mfaService->disableForUser($object);
-                setEventMessages($langs->trans("MFADisabled"), null, 'mesgs');
-            }
-        }
-
-        if ($action == 'enablemfa') {
-            $mfaService = new MFAService($this->db);
+        if ($parameters['currentcontext'] == 'usercard') {
             $id = GETPOST('id', 'int');
-            $mfa = $mfaService->getForUser($user->id, $user->entity);
-            $secret = dolDecrypt($mfa->secret);
-            $code = GETPOST('mfa_verif', 'alphanohtml');
-            if ($mfaService->verifyCode($secret, $code)) {
-                $mfaService->enableMFA($user);
-                setEventMessages("MFA Enabled", null);
-            } else {
-                setEventMessages("Invalid Code", null, 'errors');
+            $currentUser = new User($this->db);
+            $currentUser->fetch($id);
+
+            if ($action == 'disablemfa') {
+                $mfaService = new MFAService($this->db);
+                if ($user->admin || $user->id == $currentUser->id) {
+                    $mfaService->disableForUser($currentUser);
+                    setEventMessages($langs->trans("MFADisabled"), null, 'mesgs');
+                }
+            }
+
+            if ($action == 'enablemfa') {
+                $mfaService = new MFAService($this->db);
+
+                $mfa = $mfaService->getForUser($currentUser->id, $currentUser->entity);
+                $secret = dolDecrypt($mfa->secret);
+                $code = GETPOST('mfa_verif', 'alphanohtml');
+                if ($mfaService->verifyCode($secret, $code)) {
+                    $mfaService->enableMFA($currentUser);
+                    setEventMessages("MFA Enabled", null);
+                } else {
+                    setEventMessages("Invalid Code", null, 'errors');
+                }
             }
         }
     }
