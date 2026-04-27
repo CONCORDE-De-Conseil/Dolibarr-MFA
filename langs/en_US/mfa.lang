@@ -61,3 +61,5 @@ MFAPendingChallenge = A login session is waiting for MFA confirmation.
 MFAContinueAs = Continue as %s?
 MFASessionDestroyed = Pending MFA session has been destroyed.
 Verify = Verify
+MFAEnabled = MFA has been enabled.
+InvalidCode = Invalid code. Please try again.

@@ -198,6 +198,7 @@ class ActionsMFA extends CommonHookActions
         }
         if ($parameters['currentcontext'] == 'usercard' && $action != 'create') {
             global $langs, $user;
+            print '<!-- Begin MFA Section -->';
 
             $langs->load("mfa@mfa");
             $mfaService = new MFAService($this->db);
@@ -207,7 +208,7 @@ class ActionsMFA extends CommonHookActions
             $currentUser = new User($this->db);
             $currentUser->fetch($id);
 
-            $mfa = $mfaService->getForUser($object->id, $object->entity);
+            $mfa = $mfaService->getForUser($currentUser->id, $currentUser->entity);
 
             // 🔐 Ensure secret exists (ONLY when needed)
             if ($currentAction === 'setupmfa') {
@@ -222,19 +223,17 @@ class ActionsMFA extends CommonHookActions
                 }
             }
 
-            print '<!-- Begin MFA Section -->';
-
             // 🔹 Status row
             print '<tr class="trextrafields"><td class="titlefield">' . $langs->trans("MFAStatus") . '</td><td>';
 
             if ($mfa && $mfa->enabled) {
-                print '<span class="badge badge-status status4">' . $langs->trans("Enabled") . '</span>';
+                print '<span class="badge badge-status4 badge-status">' . $langs->trans("Enabled") . '</span>';
 
                 if ($user->admin || $user->id == $currentUser->id) {
                     print ' <a class="butActionDelete" href="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=disablemfa&token=' . newToken() . '">' . $langs->trans("Disable") . '</a>';
                 }
             } else {
-                print '<span class="badge badge-status status5">' . $langs->trans("Disabled") . '</span>';
+                print '<span class="badge badge-status5 badge-status">' . $langs->trans("Disabled") . '</span>';
 
                 if ($user->admin || $user->id == $currentUser->id) {
                     print ' <a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=setupmfa&token=' . newToken() . '">' . $langs->trans("SetupMFA") . '</a>';
@@ -243,6 +242,7 @@ class ActionsMFA extends CommonHookActions
 
             print '</td></tr>';
             // 🔹 Setup screen
+
             if ($currentAction === 'setupmfa' && $mfa) {
 
                 $secret = dolDecrypt($mfa->secret);
@@ -260,15 +260,12 @@ class ActionsMFA extends CommonHookActions
                 print '<td>';
 
                 print '<code>' . dol_escape_htmltag($secret) . '</code><br>';
-                print '<div class="opacitymedium small">' . dol_escape_htmltag($uri) . '</div>';
 
-                if (empty($mfa->enabled)) {
-                    print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=enablemfa&token=' . newToken() . '">';
+                print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=enablemfa&token=' . newToken() . '">';
 
-                    print '<input type="text" name="mfa_verif" maxlength="6" placeholder="' . $langs->trans("EnterVerifyCode") . '" class="flat"> ';
-                    print '<input type="submit" class="button" value="' . $langs->trans("VerifyAndEnable") . '">';
-                    print '</form>';
-                }
+                print '<input type="text" name="mfa_verif" maxlength="6" placeholder="' . $langs->trans("EnterVerifyCode") . '" class="flat"> ';
+                print '<input type="submit" class="button" value="' . $langs->trans("VerifyAndEnable") . '">';
+                print '</form>';
 
                 print '</td></tr>';
             }
@@ -304,9 +301,9 @@ class ActionsMFA extends CommonHookActions
                 $code = GETPOST('mfa_verif', 'alphanohtml');
                 if ($mfaService->verifyCode($secret, $code)) {
                     $mfaService->enableMFA($currentUser);
-                    setEventMessages("MFA Enabled", null);
+                    setEventMessages($langs->trans("MFAEnabled"), null, 'mesgs');
                 } else {
-                    setEventMessages("Invalid Code", null, 'errors');
+                    setEventMessages($langs->trans("InvalidCode"), null, 'errors');
                 }
             }
         }
