@@ -105,7 +105,7 @@ Then:
 
 ## Recommended Screenshot Content
 
-### `screenshot_mfa_user_setup.png`
+### `screenshot_mfa_user_setup.jpg`
 
 Capture the user card while MFA enrollment is open.
 Try to include:
@@ -116,7 +116,7 @@ Try to include:
 - secret display
 - `Verify and Enable` action
 
-### `screenshot_mfa_login_challenge.png`
+### `screenshot_mfa_login_challenge.jpg`
 
 Capture the login page after password validation when MFA is requested.
 Try to include:
@@ -125,7 +125,7 @@ Try to include:
 - OTP input field
 - verification dialog or confirm form
 
-### `screenshot_mfa_attempt_history.png`
+### `screenshot_mfa_attempt_history.jpg`
 
 Capture the admin page for failed attempts.
 Try to include:
