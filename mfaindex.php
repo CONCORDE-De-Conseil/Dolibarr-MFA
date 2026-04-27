@@ -4,7 +4,8 @@
  * Copyright (C) 2005-2012  Regis Houssin           <regis.houssin@inodbox.com>
  * Copyright (C) 2015       Jean-François Ferry     <jfefe@aternatik.fr>
  * Copyright (C) 2024       Frédéric France         <frederic.france@free.fr>
- * Copyright (C) 2026		Alice Adminson				<laurent@destailleur.fr>
+ * Copyright (C) 2026		CONCORDE de Conseil				<contact@concorde.tn>
+ * Copyright (C) 2026		Ali WERGHEMMI				<ali.werghemmi@concorde.tn>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +31,7 @@
 $res = 0;
 // Try main.inc.php into web root known defined into CONTEXT_DOCUMENT_ROOT (not always defined)
 if (!$res && !empty($_SERVER["CONTEXT_DOCUMENT_ROOT"])) {
-	$res = @include str_replace("..", "", $_SERVER["CONTEXT_DOCUMENT_ROOT"])."/main.inc.php";
+    $res = @include str_replace("..", "", $_SERVER["CONTEXT_DOCUMENT_ROOT"]) . "/main.inc.php";
 }
 // Try main.inc.php into web root detected using web root calculated from SCRIPT_FILENAME
 $tmp = empty($_SERVER['SCRIPT_FILENAME']) ? '' : $_SERVER['SCRIPT_FILENAME'];
@@ -38,27 +39,27 @@ $tmp2 = realpath(__FILE__);
 $i = strlen($tmp) - 1;
 $j = strlen($tmp2) - 1;
 while ($i > 0 && $j > 0 && isset($tmp[$i]) && isset($tmp2[$j]) && $tmp[$i] == $tmp2[$j]) {
-	$i--;
-	$j--;
+    $i--;
+    $j--;
 }
-if (!$res && $i > 0 && file_exists(substr($tmp, 0, ($i + 1))."/main.inc.php")) {
-	$res = @include substr($tmp, 0, ($i + 1))."/main.inc.php";
+if (!$res && $i > 0 && file_exists(substr($tmp, 0, ($i + 1)) . "/main.inc.php")) {
+    $res = @include substr($tmp, 0, ($i + 1)) . "/main.inc.php";
 }
-if (!$res && $i > 0 && file_exists(dirname(substr($tmp, 0, ($i + 1)))."/main.inc.php")) {
-	$res = @include dirname(substr($tmp, 0, ($i + 1)))."/main.inc.php";
+if (!$res && $i > 0 && file_exists(dirname(substr($tmp, 0, ($i + 1))) . "/main.inc.php")) {
+    $res = @include dirname(substr($tmp, 0, ($i + 1))) . "/main.inc.php";
 }
 // Try main.inc.php using relative path
 if (!$res && file_exists("../main.inc.php")) {
-	$res = @include "../main.inc.php";
+    $res = @include "../main.inc.php";
 }
 if (!$res && file_exists("../../main.inc.php")) {
-	$res = @include "../../main.inc.php";
+    $res = @include "../../main.inc.php";
 }
 if (!$res && file_exists("../../../main.inc.php")) {
-	$res = @include "../../../main.inc.php";
+    $res = @include "../../../main.inc.php";
 }
 if (!$res) {
-	die("Include of main fails");
+    die("Include of main fails");
 }
 /**
  * The main.inc.php has been included so the following variable are now defined:
@@ -68,7 +69,7 @@ if (!$res) {
  * @var Translate $langs
  * @var User $user
  */
-include_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
+include_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
 
 // Load translation files required by the page
 $langs->loadLangs(array("mfa@mfa"));
@@ -81,8 +82,8 @@ $max = getDolGlobalInt('MAIN_SIZE_SHORTLIST_LIMIT', 5);
 // Security check - Protection if external user
 $socid = GETPOSTINT('socid');
 if (!empty($user->socid) && $user->socid > 0) {
-	$action = '';
-	$socid = $user->socid;
+    $action = '';
+    $socid = $user->socid;
 }
 
 // Initialize a technical object to manage hooks. Note that conf->hooks_modules contains array
