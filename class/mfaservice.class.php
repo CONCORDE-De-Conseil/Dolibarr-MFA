@@ -51,10 +51,13 @@ class MFAService
      * @param int $user_id User identifier.
      * @return MFA|null    MFA object if found, null otherwise.
      */
-    public function getForUser($user_id)
+    public function getForUser($user_id, $entity = null)
     {
         require_once dol_buildpath('/mfa/class/mfa.class.php');
         $mfa = new MFA($this->db);
+        if ($entity !== null) {
+            $mfa->entity = (int) $entity;
+        }
         if ($mfa->fetch(0, $user_id) > 0) {
             return $mfa;
         }
@@ -169,10 +172,15 @@ class MFAService
             return false;
         }
 
+        $decodedSecret = $this->base32Decode($secret);
+        if ($decodedSecret === false || $decodedSecret === '') {
+            return false;
+        }
+
         $timeWindow = floor(time() / 30);
 
         for ($i = -1; $i <= 1; $i++) {
-            if ($this->calculateCode($secret, $timeWindow + $i) === $code) {
+            if ($this->calculateCode($decodedSecret, $timeWindow + $i) === $code) {
                 return true;
             }
         }
@@ -183,18 +191,16 @@ class MFAService
     /**
      * Compute the TOTP code for a given 30-second time window.
      *
-     * @param string $secret     Base32 TOTP secret.
+     * @param string $binarySecret Raw decoded TOTP secret.
      * @param int    $timeWindow Time window index.
      * @return string            Six-digit TOTP code.
      */
-    private function calculateCode($secret, $timeWindow)
+    private function calculateCode($binarySecret, $timeWindow)
     {
-        $key = $this->base32Decode($secret);
-
         // Proper 64-bit time
         $time = pack('N*', 0) . pack('N*', $timeWindow);
 
-        $hash = hash_hmac('sha1', $time, $key, true);
+        $hash = hash_hmac('sha1', $time, $binarySecret, true);
         $offset = ord($hash[19]) & 0xf;
 
         $otp = (
@@ -211,7 +217,7 @@ class MFAService
      * Decode a Base32-encoded secret into raw binary form.
      *
      * @param string $base32 Base32 encoded string.
-     * @return string        Raw binary secret.
+     * @return string|false  Raw binary secret, or false if the input is malformed.
      */
     private function base32Decode($base32)
     {
@@ -220,9 +226,11 @@ class MFAService
         $bufferSize = 0;
         $binary = '';
 
-        foreach (str_split($base32) as $char) {
+        foreach (str_split(strtoupper((string) $base32)) as $char) {
             $pos = strpos($alphabet, $char);
-            if ($pos === false) continue;
+            if ($pos === false) {
+                return false;
+            }
 
             $buffer = ($buffer << 5) | $pos;
             $bufferSize += 5;
@@ -231,6 +239,10 @@ class MFAService
                 $bufferSize -= 8;
                 $binary .= chr(($buffer >> $bufferSize) & 0xff);
             }
+        }
+
+        if ($bufferSize > 0 && (($buffer & ((1 << $bufferSize) - 1)) !== 0)) {
+            return false;
         }
 
         return $binary;

@@ -33,6 +33,16 @@ require_once dol_buildpath('/mfa/class/mfaservice.class.php');
 class ActionsMFA extends CommonHookActions
 {
     /**
+     * @var int Maximum number of invalid MFA setup verification attempts before cooldown.
+     */
+    const MFA_SETUP_MAX_ATTEMPTS = 5;
+
+    /**
+     * @var int Cooldown duration in seconds after too many invalid setup attempts.
+     */
+    const MFA_SETUP_COOLDOWN = 300;
+
+    /**
      * @var DoliDB Database handler.
      */
     public $db;
@@ -72,6 +82,92 @@ class ActionsMFA extends CommonHookActions
     public function __construct($db)
     {
         $this->db = $db;
+    }
+
+    /**
+     * Check whether the authenticated user may manage the target user's MFA settings.
+     *
+     * @param User $actorUser  Authenticated user performing the action.
+     * @param User $targetUser User whose MFA settings are targeted.
+     * @return bool            True when access is allowed.
+     */
+    private function canManageMfaForUser(User $actorUser, User $targetUser)
+    {
+        return ($actorUser->admin || (int) $actorUser->id === (int) $targetUser->id);
+    }
+
+    /**
+     * Validate the anti-CSRF token provided with MFA actions.
+     *
+     * @return bool True when the submitted token matches the current session token.
+     */
+    private function hasValidActionToken()
+    {
+        $token = (string) GETPOST('token', 'alphanohtml');
+        if ($token === '' || !function_exists('currentToken')) {
+            return false;
+        }
+
+        return hash_equals((string) currentToken(), $token);
+    }
+
+    /**
+     * Build the session key used to track MFA setup verification attempts.
+     *
+     * @param int $userId Target user identifier.
+     * @return string     Session array key.
+     */
+    private function getMfaAttemptSessionKey($userId)
+    {
+        return 'dol_mfa_setup_attempts_' . ((int) $userId);
+    }
+
+    /**
+     * Return the remaining cooldown in seconds for MFA verification attempts.
+     *
+     * @param int $userId Target user identifier.
+     * @return int        Remaining cooldown time, or 0 when not locked.
+     */
+    private function getMfaAttemptCooldownRemaining($userId)
+    {
+        $state = empty($_SESSION[$this->getMfaAttemptSessionKey($userId)]) ? array() : $_SESSION[$this->getMfaAttemptSessionKey($userId)];
+        $lockedUntil = empty($state['locked_until']) ? 0 : (int) $state['locked_until'];
+        $remaining = $lockedUntil - time();
+
+        return max(0, $remaining);
+    }
+
+    /**
+     * Record a failed MFA verification attempt and apply cooldown when needed.
+     *
+     * @param int $userId Target user identifier.
+     * @return int        Remaining cooldown in seconds after recording the failure.
+     */
+    private function registerFailedMfaAttempt($userId)
+    {
+        $sessionKey = $this->getMfaAttemptSessionKey($userId);
+        $state = empty($_SESSION[$sessionKey]) ? array('count' => 0, 'locked_until' => 0) : $_SESSION[$sessionKey];
+        $state['count'] = empty($state['count']) ? 1 : ((int) $state['count'] + 1);
+
+        if ($state['count'] >= self::MFA_SETUP_MAX_ATTEMPTS) {
+            $state['count'] = 0;
+            $state['locked_until'] = time() + self::MFA_SETUP_COOLDOWN;
+        }
+
+        $_SESSION[$sessionKey] = $state;
+
+        return $this->getMfaAttemptCooldownRemaining($userId);
+    }
+
+    /**
+     * Clear MFA verification attempt tracking for the target user.
+     *
+     * @param int $userId Target user identifier.
+     * @return void
+     */
+    private function resetFailedMfaAttempts($userId)
+    {
+        unset($_SESSION[$this->getMfaAttemptSessionKey($userId)]);
     }
 
     /**
@@ -207,11 +303,16 @@ class ActionsMFA extends CommonHookActions
             $currentAction = GETPOST('action', 'alpha');
             $currentUser = new User($this->db);
             $currentUser->fetch($id);
+            if (!$currentUser->id) {
+                return 0;
+            }
 
             $mfa = $mfaService->getForUser($currentUser->id, $currentUser->entity);
+            $canManageMfa = $this->canManageMfaForUser($user, $currentUser);
+            $hasValidActionToken = $this->hasValidActionToken();
 
-            // 🔐 Ensure secret exists (ONLY when needed)
-            if ($currentAction === 'setupmfa') {
+            // Ensure a provisioning secret exists only after a valid authorized setup request.
+            if ($currentAction === 'setupmfa' && $canManageMfa && $hasValidActionToken) {
                 // If we are in setup mode, we only generate a new secret if the user doesn't already have an unconfirmed one
                 if (!$mfa || empty($mfa->secret)) {
                     $secret = $mfaService->generateSecret();
@@ -229,13 +330,13 @@ class ActionsMFA extends CommonHookActions
             if ($mfa && $mfa->enabled) {
                 print '<span class="badge badge-status4 badge-status">' . $langs->trans("Enabled") . '</span>';
 
-                if ($user->admin || $user->id == $currentUser->id) {
+                if ($canManageMfa) {
                     print ' <a class="butActionDelete" href="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=disablemfa&token=' . newToken() . '">' . $langs->trans("Disable") . '</a>';
                 }
             } else {
                 print '<span class="badge badge-status5 badge-status">' . $langs->trans("Disabled") . '</span>';
 
-                if ($user->admin || $user->id == $currentUser->id) {
+                if ($canManageMfa) {
                     print ' <a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=setupmfa&token=' . newToken() . '">' . $langs->trans("SetupMFA") . '</a>';
                 }
             }
@@ -243,7 +344,7 @@ class ActionsMFA extends CommonHookActions
             print '</td></tr>';
             // 🔹 Setup screen
 
-            if ($currentAction === 'setupmfa' && $mfa) {
+            if ($currentAction === 'setupmfa' && $mfa && $canManageMfa && $hasValidActionToken) {
 
                 $secret = dolDecrypt($mfa->secret);
                 $uri = $mfaService->getProvisioningUri($currentUser->login, $secret);
@@ -279,33 +380,70 @@ class ActionsMFA extends CommonHookActions
     public function doActions($parameters, &$object, &$action, $hookmanager)
     {
         global $langs, $user;
+        $langs->load("mfa@mfa");
 
         if ($parameters['currentcontext'] == 'usercard') {
             $id = GETPOST('id', 'int');
             $currentUser = new User($this->db);
             $currentUser->fetch($id);
 
+            if (!$currentUser->id) {
+                return 0;
+            }
+
             if ($action == 'disablemfa') {
                 $mfaService = new MFAService($this->db);
+                if (!$this->canManageMfaForUser($user, $currentUser)) {
+                    setEventMessages($langs->trans("ErrorForbidden"), null, 'errors');
+                    return 0;
+                }
+                if (!$this->hasValidActionToken()) {
+                    setEventMessages($langs->trans("ErrorBadToken"), null, 'errors');
+                    return 0;
+                }
                 if ($user->admin || $user->id == $currentUser->id) {
                     $mfaService->disableForUser($currentUser);
+                    $this->resetFailedMfaAttempts($currentUser->id);
                     setEventMessages($langs->trans("MFADisabled"), null, 'mesgs');
                 }
             }
 
             if ($action == 'enablemfa') {
                 $mfaService = new MFAService($this->db);
+                if (!$this->canManageMfaForUser($user, $currentUser)) {
+                    setEventMessages($langs->trans("ErrorForbidden"), null, 'errors');
+                    return 0;
+                }
+                if (!$this->hasValidActionToken()) {
+                    setEventMessages($langs->trans("ErrorBadToken"), null, 'errors');
+                    return 0;
+                }
+
+                $cooldownRemaining = $this->getMfaAttemptCooldownRemaining($currentUser->id);
+                if ($cooldownRemaining > 0) {
+                    setEventMessages('Too many invalid MFA verification attempts. Please try again later.', null, 'errors');
+                    return 0;
+                }
 
                 $mfa = $mfaService->getForUser($currentUser->id, $currentUser->entity);
+                if (!$mfa || empty($mfa->secret)) {
+                    setEventMessages('MFA secret is not available for this user.', null, 'errors');
+                    return 0;
+                }
+
                 $secret = dolDecrypt($mfa->secret);
                 $code = GETPOST('mfa_verif', 'alphanohtml');
                 if ($mfaService->verifyCode($secret, $code)) {
                     $mfaService->enableMFA($currentUser);
+                    $this->resetFailedMfaAttempts($currentUser->id);
                     setEventMessages($langs->trans("MFAEnabled"), null, 'mesgs');
                 } else {
+                    $this->registerFailedMfaAttempt($currentUser->id);
                     setEventMessages($langs->trans("InvalidCode"), null, 'errors');
                 }
             }
         }
+
+        return 0;
     }
 }
