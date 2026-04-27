@@ -22,17 +22,17 @@
  * \ingroup mfa
  * \brief   Example hook overload.
  *
- * TODO: Write detailed description here.
+ * MFA actions class to handle MFA management on user card and MFA verification on login page.
  */
 
-require_once DOL_DOCUMENT_ROOT . '/core/class/commonhookactions.class.php';
 require_once dol_buildpath('/mfa/class/mfaservice.class.php');
 require_once dol_buildpath('/mfa/class/mfaattemptservice.class.php');
+require_once dol_buildpath('/mfa/lib/mfa.lib.php');
 
 /**
  * Class ActionsMFA
  */
-class ActionsMFA extends CommonHookActions
+class ActionsMFA
 {
     const MFA_SETUP_MAX_ATTEMPTS = 5;
     const MFA_SETUP_COOLDOWN = 300;
@@ -126,23 +126,6 @@ class ActionsMFA extends CommonHookActions
 
 
     /**
-     * Execute action
-     *
-     * @param	array<string,mixed>	$parameters	Array of parameters
-     * @param	CommonObject		$object		The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
-     * @param	string				$action		'add', 'update', 'view'
-     * @return	int								Return integer <0 if KO,
-     *                           				=0 if OK but we want to process standard actions too,
-     *											>0 if OK and we want to replace standard actions.
-     */
-    public function getNomUrl($parameters, &$object, &$action)
-    {
-        global $db, $langs, $conf, $user;
-        $this->resprints = '';
-        return 0;
-    }
-
-    /**
      * Inject MFA field into login form
      *
      * @param array  $parameters Hook parameters
@@ -160,7 +143,7 @@ class ActionsMFA extends CommonHookActions
         $requestedAction = GETPOST('action', 'aZ09');
         $confirm = GETPOST('confirm', 'alpha');
         $mfaAbort = GETPOSTINT('mfaabort');
-
+        var_dump($_SESSION);
         if (!empty($_SESSION['dol_mfa_challenge_user_id']) && (($requestedAction === 'login' && $confirm === 'no') || $mfaAbort === 1)) {
             $this->clearMfaChallengeSession(true);
             $_SESSION['dol_loginmesg'] = $langs->trans('MFASessionDestroyed');
@@ -223,7 +206,7 @@ class ActionsMFA extends CommonHookActions
      * @param object $hookmanager Hook manager
      * @return int               Return 0
      */
-    public function showOutputExtraField($parameters, &$object, &$action, $hookmanager)
+    public function formObjectOptions($parameters, &$object, &$action, $hookmanager)
     {
         if (!in_array('usercard', $hookmanager->contextarray)) {
             return 0;

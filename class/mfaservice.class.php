@@ -22,6 +22,8 @@
  * \brief   Service class for MFA secret management and TOTP verification.
  */
 
+require_once dol_buildpath('/mfa/lib/mfa.lib.php');
+
 /**
  * Class MFAService
  *

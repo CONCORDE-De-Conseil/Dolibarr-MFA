@@ -65,7 +65,6 @@ class modMFA extends DolibarrModules
                     'mainloginpage',
                     'login',
                     'usercard',
-                    'globalcard'
                 ),
                 //   'entity' => '0',
             ),

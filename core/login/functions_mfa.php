@@ -35,7 +35,8 @@ function check_user_password_mfa($login, $password, $entity)
 
     $maxAttempts = 5;
     $cooldown = 300;
-
+    var_dump("ssssss");
+    die();
     if (!is_object($db)) {
         return 0;
     }
@@ -73,13 +74,15 @@ function check_user_password_mfa($login, $password, $entity)
 
     // 1. Verify standard password (or check if already verified in this session)
     $password_already_verified = (!empty($_SESSION['dol_mfa_password_verified']) && $_SESSION['dol_mfa_challenge_login'] === $challengeLogin);
-
+    var_dump("ssssss");
+    die();
     if ($password_already_verified) {
         $response = $challengeLogin;
     } else {
         $response = check_user_password_dolibarr($challengeLogin, $challengePassword, $challengeEntity);
     }
-
+    var_dump($response);
+    die();
     if ($response == '') {
         return '';
     }
