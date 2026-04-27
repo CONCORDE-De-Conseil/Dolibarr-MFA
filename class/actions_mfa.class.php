@@ -206,7 +206,7 @@ class ActionsMFA extends CommonHookActions
             $formquestion,
             '',
             2,
-            250
+            260
         );
 
         print $formconfirm;

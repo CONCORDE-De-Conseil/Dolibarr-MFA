@@ -2,6 +2,23 @@
 
 Multi-Factor Authentication module for Dolibarr using TOTP-compatible authenticator applications such as Google Authenticator, Microsoft Authenticator, Authy, or FreeOTP.
 
+## Screenshots
+
+- user card with `Setup MFA`, QR code, secret, and verification field
+
+
+![MFA user setup](img/screenshot_mfa_user_setup.jpg "MFA user setup")
+
+- login page showing the MFA code prompt
+
+
+![MFA login challenge](img/screenshot_mfa_login_challenge.jpg "MFA login challenge")
+
+- admin page with MFA failed-attempt history and reset actions
+
+
+![MFA attempt history](img/screenshot_mfa_attempt_history.jpg "MFA attempt history")
+
 ## Overview
 
 This module adds a second authentication step after the standard Dolibarr password check.
@@ -86,6 +103,39 @@ Then:
 3. Find the affected user in the current state list.
 4. Click `Reset` to clear the lock or failed-attempt state.
 
+## Recommended Screenshot Content
+
+### `screenshot_mfa_user_setup.png`
+
+Capture the user card while MFA enrollment is open.
+Try to include:
+
+- MFA status block
+- `Setup MFA` or enrollment state
+- QR code
+- secret display
+- `Verify and Enable` action
+
+### `screenshot_mfa_login_challenge.png`
+
+Capture the login page after password validation when MFA is requested.
+Try to include:
+
+- warning or pending MFA message
+- OTP input field
+- verification dialog or confirm form
+
+### `screenshot_mfa_attempt_history.png`
+
+Capture the admin page for failed attempts.
+Try to include:
+
+- current lock state list
+- last attempt date
+- lock expiration
+- reset button
+- recent history log table
+
 ## Attempt History
 
 The module keeps persistent MFA failure and lock information for:
@@ -112,7 +162,7 @@ langs/ar_SA/mfa.lang
 
 ## Ownership
 
-Copyright (C) 2026 CONCORDE de Conseil [contact@concorde.tn](mailto:contact@concorde.tn)  
+Copyright (C) 2026 CONCORDE de Conseil [contact@concorde.tn](mailto:contact@concorde.tn)
 Copyright (C) 2026 Ali WERGHEMMI [ali.werghemmi@concorde.tn](mailto:ali.werghemmi@concorde.tn)
 
 Company website: [https://www.concorde.tn](https://www.concorde.tn)

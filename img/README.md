@@ -1,13 +1,25 @@
+Directory for MFA module images
+-------------------------------
 
-Directory for module image files
---------------------------------
+Recommended README screenshots:
 
-You can put here the .png files of your module:
+- `screenshot_mfa_user_setup.png`
+  User card showing MFA enrollment, QR code, secret, and verification form.
 
+- `screenshot_mfa_login_challenge.png`
+  Login page showing the MFA code challenge prompt.
 
-If the picto of your module is an image (property $picto has been set to 'mfa.png@mfa', you can put into this
-directory a .png file called *object_mfa.png* (16x16 or 32x32 pixels)
+- `screenshot_mfa_attempt_history.png`
+  Admin page showing failed attempts, lock state, and reset actions.
 
+Optional icon files:
 
-If the picto of an object is an image (property $picto of the object.class.php has been set to 'myobject.png@mfa', then you can put into this
-directory a .png file called *object_myobject.png* (16x16 or 32x32 pixels)
+- `object_mfa.png`
+  Module icon if `$picto` is configured as an image-based icon.
+
+Keep screenshots clean and readable:
+
+- Prefer desktop-width captures
+- Avoid exposing real secrets or personal data
+- Blur or replace usernames, secrets, and QR codes if needed
+- Use PNG format for UI clarity
