@@ -103,39 +103,6 @@ Then:
 3. Find the affected user in the current state list.
 4. Click `Reset` to clear the lock or failed-attempt state.
 
-## Recommended Screenshot Content
-
-### `screenshot_mfa_user_setup.jpg`
-
-Capture the user card while MFA enrollment is open.
-Try to include:
-
-- MFA status block
-- `Setup MFA` or enrollment state
-- QR code
-- secret display
-- `Verify and Enable` action
-
-### `screenshot_mfa_login_challenge.jpg`
-
-Capture the login page after password validation when MFA is requested.
-Try to include:
-
-- warning or pending MFA message
-- OTP input field
-- verification dialog or confirm form
-
-### `screenshot_mfa_attempt_history.jpg`
-
-Capture the admin page for failed attempts.
-Try to include:
-
-- current lock state list
-- last attempt date
-- lock expiration
-- reset button
-- recent history log table
-
 ## Attempt History
 
 The module keeps persistent MFA failure and lock information for:

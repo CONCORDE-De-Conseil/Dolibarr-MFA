@@ -94,36 +94,6 @@ htdocs/custom/mfa
 3. ابحث عن المستخدم المطلوب في قائمة الحالة الحالية.
 4. اضغط على `Reset` لمسح حالة القفل أو المحاولات الفاشلة.
 
-## المحتوى الموصى به للقطات الشاشة
-
-### `screenshot_mfa_user_setup.jpg`
-
-التقط صورة لبطاقة المستخدم أثناء إعداد MFA. حاول أن تتضمن:
-
-- قسم حالة MFA
-- حالة `Setup MFA` أو شاشة الإعداد
-- رمز QR
-- عرض السر
-- زر `Verify and Enable`
-
-### `screenshot_mfa_login_challenge.jpg`
-
-التقط صورة لصفحة تسجيل الدخول بعد التحقق من كلمة المرور عند طلب رمز MFA. حاول أن تتضمن:
-
-- رسالة التنبيه أو الجلسة المعلقة
-- حقل إدخال رمز OTP
-- نافذة أو نموذج التحقق
-
-### `screenshot_mfa_attempt_history.jpg`
-
-التقط صورة لصفحة الإدارة الخاصة بالمحاولات الفاشلة. حاول أن تتضمن:
-
-- قائمة حالة القفل الحالية
-- تاريخ آخر محاولة
-- وقت انتهاء القفل
-- زر إعادة التعيين
-- جدول السجل الحديث
-
 ## سجل المحاولات
 
 يحتفظ الموديول بمعلومات دائمة عن فشل MFA وحالات القفل لكل من:
@@ -150,7 +120,7 @@ langs/ar_SA/mfa.lang
 
 ## الملكية
 
-Copyright (C) 2026 CONCORDE de Conseil [contact@concorde.tn](mailto:contact@concorde.tn)  
+Copyright (C) 2026 CONCORDE de Conseil [contact@concorde.tn](mailto:contact@concorde.tn)
 Copyright (C) 2026 Ali WERGHEMMI [ali.werghemmi@concorde.tn](mailto:ali.werghemmi@concorde.tn)
 
 موقع الشركة: [https://www.concorde.tn](https://www.concorde.tn)

@@ -94,36 +94,6 @@ Puis :
 3. Recherchez l'utilisateur concerné dans la liste des états courants.
 4. Cliquez sur `Reset` pour effacer le blocage ou l'état des tentatives échouées.
 
-## Contenu recommandé des captures
-
-### `screenshot_mfa_user_setup.jpg`
-
-Capturez la fiche utilisateur pendant l'enrôlement MFA. Essayez d'inclure :
-
-- le bloc d'état MFA
-- l'état `Setup MFA` ou l'écran d'enrôlement
-- le QR code
-- l'affichage du secret
-- l'action `Verify and Enable`
-
-### `screenshot_mfa_login_challenge.jpg`
-
-Capturez la page de connexion après validation du mot de passe lorsque le code MFA est demandé. Essayez d'inclure :
-
-- le message d'alerte ou de session MFA en attente
-- le champ de saisie OTP
-- la boîte ou le formulaire de vérification
-
-### `screenshot_mfa_attempt_history.jpg`
-
-Capturez la page d'administration des tentatives échouées. Essayez d'inclure :
-
-- la liste de l'état courant des blocages
-- la date de la dernière tentative
-- l'expiration du blocage
-- le bouton de réinitialisation
-- le tableau de l'historique récent
-
 ## Historique des tentatives
 
 Le module conserve les informations persistantes sur les échecs et les blocages MFA pour :
@@ -150,7 +120,7 @@ langs/ar_SA/mfa.lang
 
 ## Propriété
 
-Copyright (C) 2026 CONCORDE de Conseil [contact@concorde.tn](mailto:contact@concorde.tn)  
+Copyright (C) 2026 CONCORDE de Conseil [contact@concorde.tn](mailto:contact@concorde.tn)
 Copyright (C) 2026 Ali WERGHEMMI [ali.werghemmi@concorde.tn](mailto:ali.werghemmi@concorde.tn)
 
 Site web de l'entreprise : [https://www.concorde.tn](https://www.concorde.tn)
