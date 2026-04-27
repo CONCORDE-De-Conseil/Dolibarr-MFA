@@ -74,7 +74,7 @@ if ($action === 'resetattempts') {
 
     if ($token === '' || !hash_equals((string) currentToken(), (string) $token)) {
         setEventMessages($langs->trans("ErrorBadToken"), null, 'errors');
-    } elseif ($fkUser > 0 && $entity > 0) {
+    } elseif ($fkUser > 0 && $entity >= 0) {
         $attemptService->resetAttempts($fkUser, $entity, $scope, (int) $user->id);
         setEventMessages($langs->trans("MFAAttemptsResetDone"), null, 'mesgs');
     }
@@ -101,8 +101,8 @@ print '</table>';
 print '</div>';
 print '</form>';
 
-$stateRows = $attemptService->getAttemptStateList($searchUser, $showLockedOnly, 200);
-$logRows = $attemptService->getRecentLogs($searchUser, 200);
+$stateRows = $attemptService->getAttemptStateList($searchUser, $showLockedOnly, 50);
+$logRows = $attemptService->getRecentLogs($searchUser, 50);
 
 print '<div class="fichecenter">';
 print '<div class="fichethirdleft">';
@@ -139,7 +139,7 @@ if (empty($stateRows)) {
         print '<td>' . (!empty($row->last_attempt) ? dol_print_date($db->jdate($row->last_attempt), 'dayhour') : '') . '</td>';
         print '<td>';
         if ($isLocked) {
-            print '<span class="badge badge-status4 badge-status">' . dol_print_date($db->jdate($row->locked_until), 'dayhour') . '</span>';
+            print '<span class="badge badge-status8 badge-status">' . dol_print_date($db->jdate($row->locked_until), 'dayhour') . '</span>';
         } else {
             print '<span class="opacitymedium">' . $langs->trans("No") . '</span>';
         }
@@ -179,7 +179,6 @@ print '<th>' . $langs->trans("MFAAttemptScope") . '</th>';
 print '<th>' . $langs->trans("MFAAttemptEvent") . '</th>';
 print '<th class="center">' . $langs->trans("MFAAttemptCount") . '</th>';
 print '<th>' . $langs->trans("MFALastIP") . '</th>';
-print '<th>' . $langs->trans("By") . '</th>';
 print '</tr>';
 
 if (empty($logRows)) {
@@ -209,7 +208,6 @@ if (empty($logRows)) {
         print '<td>' . $langs->trans($eventLabel) . '</td>';
         print '<td class="center">' . ((int) $row->attempt_count) . '</td>';
         print '<td>' . dol_escape_htmltag((string) $row->ip_address) . '</td>';
-        print '<td>' . dol_escape_htmltag((string) $row->action_login) . '</td>';
         print '</tr>';
     }
 }
