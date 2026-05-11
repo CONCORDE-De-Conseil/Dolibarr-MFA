@@ -35,7 +35,6 @@ function check_user_password_mfa($login, $password, $entity)
 
     $maxAttempts = 5;
     $cooldown = 300;
-
     if (!is_object($db)) {
         return 0;
     }
@@ -98,6 +97,7 @@ function check_user_password_mfa($login, $password, $entity)
     $mfaService = new MFAService($db);
     $attemptService = new MFAAttemptService($db);
     $mfa = $mfaService->getForUser($userstatic->id, $userstatic->entity);
+
 
     if ($mfa && $mfa->enabled) {
         $cooldownRemaining = $attemptService->getCooldownRemaining($userstatic->id, $userstatic->entity, MFAAttemptService::SCOPE_LOGIN);

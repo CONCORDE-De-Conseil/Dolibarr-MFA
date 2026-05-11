@@ -22,17 +22,17 @@
  * \ingroup mfa
  * \brief   Example hook overload.
  *
- * TODO: Write detailed description here.
+ * MFA actions class to handle MFA management on user card and MFA verification on login page.
  */
 
-require_once DOL_DOCUMENT_ROOT . '/core/class/commonhookactions.class.php';
 require_once dol_buildpath('/mfa/class/mfaservice.class.php');
 require_once dol_buildpath('/mfa/class/mfaattemptservice.class.php');
+require_once dol_buildpath('/mfa/lib/mfa.lib.php');
 
 /**
  * Class ActionsMFA
  */
-class ActionsMFA extends CommonHookActions
+class ActionsMFA
 {
     const MFA_SETUP_MAX_ATTEMPTS = 5;
     const MFA_SETUP_COOLDOWN = 300;
@@ -118,29 +118,14 @@ class ActionsMFA extends CommonHookActions
         unset($_SESSION['dol_mfa_challenge_login']);
         unset($_SESSION['dol_mfa_challenge_entity']);
         unset($_SESSION['dol_mfa_password_verified']);
+        unset($_SESSION['dol_login']);  // Clear the login session
+        unset($_SESSION['dol_loginmesg']);  // Clear any pending message
 
         if ($renewSessionId) {
             session_regenerate_id(true);
         }
     }
 
-
-    /**
-     * Execute action
-     *
-     * @param	array<string,mixed>	$parameters	Array of parameters
-     * @param	CommonObject		$object		The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
-     * @param	string				$action		'add', 'update', 'view'
-     * @return	int								Return integer <0 if KO,
-     *                           				=0 if OK but we want to process standard actions too,
-     *											>0 if OK and we want to replace standard actions.
-     */
-    public function getNomUrl($parameters, &$object, &$action)
-    {
-        global $db, $langs, $conf, $user;
-        $this->resprints = '';
-        return 0;
-    }
 
     /**
      * Inject MFA field into login form
@@ -161,10 +146,16 @@ class ActionsMFA extends CommonHookActions
         $confirm = GETPOST('confirm', 'alpha');
         $mfaAbort = GETPOSTINT('mfaabort');
 
-        if (!empty($_SESSION['dol_mfa_challenge_user_id']) && (($requestedAction === 'login' && $confirm === 'no') || $mfaAbort === 1)) {
+        $isSessionSetted = isset($_SESSION['dol_mfa_challenge_user_id']) && !empty($_SESSION['dol_mfa_challenge_user_id']) && $_SESSION['dol_mfa_challenge_user_id'] != null;
+
+        if ($isSessionSetted  && (($requestedAction === 'login' && $confirm === 'no') || $mfaAbort === 1)) {
             $this->clearMfaChallengeSession(true);
             $_SESSION['dol_loginmesg'] = $langs->trans('MFASessionDestroyed');
-            return 0;
+
+            $urllogout = DOL_URL_ROOT . '/user/logout.php?token=' . newToken();
+            // header('Location: ' . $urllogout);
+            print '<script>window.location.href = "' . $urllogout . '";</script>';
+            return -1;
         }
 
         if (empty($_SESSION['dol_mfa_challenge_user_id'])) {
@@ -184,8 +175,9 @@ class ActionsMFA extends CommonHookActions
             . '&loginfunction=loginfunction';
         $confirmMessage = $langs->trans('EnterMFACode') . '<br><span class="opacitymedium">' . $langs->trans('MFAContinueAs', $pendingLoginEscaped) . '</span>';
 
-        $logoutUrl = $_SERVER['PHP_SELF'] . '?mfaabort=1&token=' . urlencode(newToken());
-        print '<div class="warning">' . $langs->trans('MFAPendingChallenge') . ' ' . $langs->trans('MFAContinueAs', '<strong>' . $pendingLoginEscaped . '</strong>') . ' <a href="' . dol_escape_htmltag($logoutUrl) . '">' . $langs->trans('Logout') . '</a></div>';
+        $logoutUrl = DOL_URL_ROOT . '/user/logout.php?token=' . newToken();
+
+        print '<div class="warning">' . $langs->trans('MFAPendingChallenge') . ' ' . $langs->trans('MFAContinueAs',  $pendingLoginEscaped ) . '<a href="' . dol_escape_htmltag($logoutUrl) . '">' . $langs->trans('Logout') . '</a></strong></div>';
 
         $formquestion = array(
             array(
@@ -223,7 +215,7 @@ class ActionsMFA extends CommonHookActions
      * @param object $hookmanager Hook manager
      * @return int               Return 0
      */
-    public function showOutputExtraField($parameters, &$object, &$action, $hookmanager)
+    public function formObjectOptions($parameters, &$object, &$action, $hookmanager)
     {
         if (!in_array('usercard', $hookmanager->contextarray)) {
             return 0;
@@ -281,30 +273,76 @@ class ActionsMFA extends CommonHookActions
             // 🔹 Setup screen
 
             if ($currentAction === 'setupmfa' && $mfa && $canManageMfa && $hasValidActionToken) {
+                require_once DOL_DOCUMENT_ROOT . '/core/lib/security.lib.php';
 
+                // 1. Try to decrypt
                 $secret = dolDecrypt($mfa->secret);
+
+                // 2. Validate if it's a real Base32 string (A-Z, 2-7, exactly 16 chars usually)
+                if (!preg_match('/^[A-Z2-7]{16}$/', $secret)) {
+                    // SECRET IS CORRUPT - Generate a fresh one immediately
+                    $secret = $mfaService->generateSecret();
+
+                    // Update the DB so we don't have this error again next time
+                    $mfaService->createOrUpdateSecret($currentUser, $secret, 0);
+
+                    print '<div class="warning">Previous secret was invalid. A new one has been generated.</div>';
+                }
+
+                // 3. Build URI with the CLEAN secret
                 $uri = $mfaService->getProvisioningUri($currentUser->login, $secret);
 
-                $qrurl = DOL_URL_ROOT . '/viewimage.php?modulepart=barcode&generator=tcpdfbarcode&encoding=QRCODE&code=' . urlencode($uri);
+                // 4. Generate QR
+                require_once TCPDF_PATH . 'tcpdf_barcodes_2d.php';
+                try {
+                    // 1. Generate QR Code
+                    $barcodeobj = new TCPDF2DBarcode($uri, 'QRCODE,L');
+                    $imageData = (string)$barcodeobj->getBarcodePngData(5, 5);
+                    $qrCodeBase64 = 'data:image/png;base64,' . base64_encode($imageData);
 
-                print '<tr class="trextrafields">';
-                print '<td class="titlefield">' . $langs->trans("MFAQRCode") . '</td>';
-                print '<td><img src="' . $qrurl . '" alt="QR Code"></td>';
-                print '</tr>';
+                    // --- ROW 1: QR CODE ---
+                    print '<tr class="trextrafields">';
+                    print '<td class="titlefield">' . $langs->trans("MFAQRCode") . '</td>';
+                    print '<td>';
+                    print '    <div style="background:#fff; padding:20px; display:inline-block; border:1px solid #ccc; border-radius: 4px;">';
+                    print '        <img src="' . $qrCodeBase64 . '" alt="QR Code" />';
+                    print '    </div>';
+                    print '    <div class="opacitymedium">' . $langs->trans("ScanThisWithYourApp") . '</div>';
+                    print '</td></tr>';
 
-                print '<tr class="trextrafields">';
-                print '<td class="titlefield">' . $langs->trans("MFASecret") . '</td>';
-                print '<td>';
+                    // --- ROW 2: TEXT SECRET ---
+                    print '<tr class="trextrafields">';
+                    print '<td class="titlefield">' . $langs->trans("MFASecretKey") . '</td>';
+                    print '<td>';
+                    print '    <code style="font-size:1.4em; letter-spacing:2px; background: #eee; padding: 2px 8px; border-radius: 3px;">' . $secret . '</code>';
+                    print '    <div class="opacitymedium">' . $langs->trans("UseThisForManualEntry") . '</div>';
+                    print '</td></tr>';
 
-                print '<code>' . dol_escape_htmltag($secret) . '</code><br>';
+                    // --- ROW 3: VERIFICATION INPUT ---
+                    print '<tr class="trextrafields">';
+                    print '<td class="titlefield"><strong>' . $langs->trans("VerifyAndEnable") . '</strong></td>';
+                    print '<td>';
 
-                print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=enablemfa&token=' . newToken() . '">';
+                    // Start Form
+                    print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '">';
+                    print '<input type="hidden" name="action" value="enablemfa">';
+                    print '<input type="hidden" name="token" value="' . newToken() . '">';
 
-                print '<input type="text" name="mfa_verif" maxlength="6" placeholder="' . $langs->trans("EnterVerifyCode") . '" class="flat"> ';
-                print '<input type="submit" class="button" value="' . $langs->trans("VerifyAndEnable") . '">';
-                print '</form>';
+                    print '<div style="margin-top: 10px;">';
+                    print '    <input type="text" name="mfa_verif" id="mfa_verif" maxlength="6" ';
+                    print '           placeholder="000000" class="flat" ';
+                    print '           style="width: 120px; text-align: center; font-size: 1.5em; font-weight: bold; height: 40px; margin-right: 10px;">';
 
-                print '</td></tr>';
+                    print '    <input type="submit" class="button" value="' . $langs->trans("VerifyAndEnable") . '">';
+                    print '</div>';
+
+                    print '<div class="opacitymedium" style="margin-top: 5px;">' . $langs->trans("EnterSixDigitCodeFromApp") . '</div>';
+                    print '</form>';
+
+                    print '</td></tr>';
+                } catch (Exception $e) {
+                    print '<tr class="trextrafields"><td colspan="2"><div class="error">' . $e->getMessage() . '</div></td></tr>';
+                }
             }
 
             print '<!-- End MFA Section -->';

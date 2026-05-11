@@ -22,6 +22,8 @@
  * \brief   Service class for MFA secret management and TOTP verification.
  */
 
+require_once dol_buildpath('/mfa/lib/mfa.lib.php');
+
 /**
  * Class MFAService
  *
@@ -149,11 +151,15 @@ class MFAService
      */
     public function getProvisioningUri($login, $secret)
     {
+        // 1. Get the issuer and strip any characters that might break the protocol
         $issuer = getDolGlobalString('MAIN_APPLICATION_TITLE', 'Dolibarr');
 
-        return 'otpauth://totp/' . rawurlencode($issuer . ':' . $login)
-            . '?secret=' . $secret
-            . '&issuer=' . rawurlencode($issuer);
+        // 2. Format: otpauth://totp/Issuer:user@email.com?secret=BASE32SECRET&issuer=Issuer
+        // Note: The Label (Issuer:Login) must be URL encoded, but the secret must remain Base32
+        $label = rawurlencode($issuer . ':' . $login);
+        $encodedIssuer = rawurlencode($issuer);
+
+        return 'otpauth://totp/' . $label . '?secret=' . $secret . '&issuer=' . $encodedIssuer;
     }
 
     /**
