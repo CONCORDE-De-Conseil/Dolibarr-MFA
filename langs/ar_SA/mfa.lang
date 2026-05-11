@@ -78,3 +78,13 @@ MFAAttemptReset = أُعيد تعيينه بواسطة المسؤول
 MFAAttemptSuccess = تم التحقق بنجاح
 MFA_MAX_ATTEMPTS = الحد الأقصى لمحاولات MFA
 MFA_SETUP_COOLDOWN = فترة التهدئة لإعداد MFA (بالثواني)
+
+# نافذة تسجيل الدخول
+MFATitle = المصادقة ثنائية العاملين
+MFASubtitle = التحقق الأمني الإضافي مطلوب
+LoggedInAs = تم تسجيل الدخول باسم
+EnterSixDigitCode = أدخل كود من 6 أرقام
+VerifyCode = تحقق من الكود
+Logout = تسجيل الخروج
+NoAccessAuthenticator = ليس لديك حق الوصول إلى المصادق الخاص بك؟
+ContactAdminForHelp = تواصل مع مسؤول النظام للحصول على المساعدة.

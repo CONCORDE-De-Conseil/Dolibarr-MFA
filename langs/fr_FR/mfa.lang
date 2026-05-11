@@ -78,3 +78,13 @@ MFAAttemptReset = Réinitialisé par l'administrateur
 MFAAttemptSuccess = Vérification réussie
 MFA_MAX_ATTEMPTS = Nombre maximum de tentatives MFA
 MFA_SETUP_COOLDOWN = Délai de configuration MFA (secondes)
+
+# Modal de connexion
+MFATitle = Authentification à deux facteurs
+MFASubtitle = Vérification de sécurité supplémentaire requise
+LoggedInAs = Connecté en tant que
+EnterSixDigitCode = Entrez un code à 6 chiffres
+VerifyCode = Vérifier le code
+Logout = Déconnexion
+NoAccessAuthenticator = Vous n'avez pas accès à votre authenticateur ?
+ContactAdminForHelp = Contactez votre administrateur pour obtenir de l'aide.

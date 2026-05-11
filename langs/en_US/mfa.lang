@@ -79,3 +79,13 @@ MFAAttemptReset = Reset by admin
 MFAAttemptSuccess = Successful verification
 MFA_MAX_ATTEMPTS = Maximum MFA attempts
 MFA_SETUP_COOLDOWN = MFA setup cooldown (seconds)
+
+# Login Modal
+MFATitle = Two-Factor Authentication
+MFASubtitle = Additional security verification required
+LoggedInAs = Logged in as
+EnterSixDigitCode = Enter 6-digit code
+VerifyCode = Verify Code
+Logout = Logout
+NoAccessAuthenticator = Don't have access to your authenticator?
+ContactAdminForHelp = Contact your administrator for assistance.

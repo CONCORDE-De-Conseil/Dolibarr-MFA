@@ -212,24 +212,24 @@ class ActionsMFA
             $cssUrl = dol_buildpath('/mfa/css/mfa.css.php', 1);
             print '<link rel="stylesheet" href="' . $cssUrl . '">';
 
-            // Modern MFA HTML
+            // Modern MFA HTML with dynamic text from language files
             $html = <<<'HTML'
 <div class="mfa-container">
     <div class="mfa-header">
         <div class="mfa-icon">🔐</div>
-        <h2>Two-Factor Authentication</h2>
-        <p>Additional security verification required</p>
+        <h2>MFA_TITLE</h2>
+        <p>MFA_SUBTITLE</p>
     </div>
 
     <div class="mfa-content">
         <div class="mfa-user-info">
-            <strong>Logged in as:</strong>
+            <strong>LOGGED_IN_AS_LABEL</strong>
             <span>USER_LOGIN</span>
         </div>
 
         <form method="POST" action="PAGE_CONFIRM">
             <div class="mfa-form-group">
-                <label for="mfa_code_modern">Enter 6-digit code</label>
+                <label for="mfa_code_modern">ENTER_CODE_LABEL</label>
                 <input
                     type="text"
                     id="mfa_code_modern"
@@ -239,30 +239,38 @@ class ActionsMFA
                     inputmode="numeric"
                     autocomplete="one-time-code"
                     autofocus
-                    
+
                 >
             </div>
 
             <div class="mfa-buttons">
                 <button type="submit" name="action" value="login" class="mfa-btn-submit">
-                    ✓ Verify Code
+                    ✓ VERIFY_BTN
                 </button>
                 <button type="submit" name="mfaabort" value="1" class="mfa-btn-logout">
-                    ✕ Logout
+                    ✕ LOGOUT_BTN
                 </button>
             </div>
 
             <div class="mfa-help-text">
-                <strong>Don't have access to your authenticator?</strong><br>
-                Contact your administrator for assistance.
+                <strong>NO_ACCESS_LABEL</strong><br>
+                CONTACT_ADMIN_TEXT
             </div>
         </form>
     </div>
 </div>
 HTML;
 
-            // Replace placeholders
+            // Replace placeholders with translated text
+            $html = str_replace('MFA_TITLE', $langs->trans('MFATitle'), $html);
+            $html = str_replace('MFA_SUBTITLE', $langs->trans('MFASubtitle'), $html);
+            $html = str_replace('LOGGED_IN_AS_LABEL', $langs->trans('LoggedInAs') . ':', $html);
             $html = str_replace('USER_LOGIN', $pendingLoginEscaped, $html);
+            $html = str_replace('ENTER_CODE_LABEL', $langs->trans('EnterSixDigitCode'), $html);
+            $html = str_replace('VERIFY_BTN', $langs->trans('VerifyCode'), $html);
+            $html = str_replace('LOGOUT_BTN', $langs->trans('Logout'), $html);
+            $html = str_replace('NO_ACCESS_LABEL', $langs->trans('NoAccessAuthenticator'), $html);
+            $html = str_replace('CONTACT_ADMIN_TEXT', $langs->trans('ContactAdminForHelp'), $html);
 
             print $html;
         }

@@ -8,14 +8,31 @@ header('Content-Type: text/css; charset=UTF-8');
 ?>
 /* MFA modern card styles */
 .mfa-container {
+position: fixed;
+top: 51%;
+left: 50%;
+transform: translate(-50%, -50%);
+z-index: 9999;
 max-width: 620px;
-width: min(620px, calc(100% - 32px));
-margin: 30px auto;
+width: min(620px, calc(100vw - 32px));
 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 border-radius: 16px;
-box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
 overflow: hidden;
 animation: mfa-slideIn 0.4s ease-out;
+}
+
+.mfa-container::before {
+content: '';
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: rgba(0, 0, 0, 0.5);
+backdrop-filter: blur(4px);
+-webkit-backdrop-filter: blur(4px);
+z-index: -1;
 }
 
 @keyframes mfa-slideIn {
@@ -63,7 +80,7 @@ width:100%; padding:12px 16px; font-size:18px; border:2px solid #e0e0e0; border-
 
 /* Small devices adjustments */
 @media (max-width:480px) {
-.mfa-container { width: calc(100% - 24px); margin: 18px auto; border-radius:12px; }
+.mfa-container { width: calc(100vw - 24px); border-radius:12px; }
 .mfa-header { padding:20px; }
 .mfa-content { padding:20px; }
 }
