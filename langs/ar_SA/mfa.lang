@@ -76,3 +76,5 @@ MFAAttemptFailure = رمز فاشل
 MFAAttemptLock = مقفل
 MFAAttemptReset = أُعيد تعيينه بواسطة المسؤول
 MFAAttemptSuccess = تم التحقق بنجاح
+MFA_MAX_ATTEMPTS = الحد الأقصى لمحاولات MFA
+MFA_SETUP_COOLDOWN = فترة التهدئة لإعداد MFA (بالثواني)

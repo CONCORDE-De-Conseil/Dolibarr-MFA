@@ -108,6 +108,12 @@ if (!$user->admin) {
     accessforbidden();
 }
 
+$item = $formSetup->newItem('MFA_MAX_ATTEMPTS');
+$item->defaultFieldValue = 5;
+
+$item = $formSetup->newItem('MFA_SETUP_COOLDOWN');
+$item->defaultFieldValue = 300;
+
 // End of definition of parameters
 
 $setupnotempty += count($formSetup->items);

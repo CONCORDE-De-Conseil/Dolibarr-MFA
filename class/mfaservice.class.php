@@ -72,21 +72,25 @@ class MFAService
      * @param User   $user    User whose MFA record must be updated.
      * @param string $secret  Plain TOTP secret to encrypt before storage.
      * @param int    $enabled Whether MFA should be enabled after save.
-     * @return int            Created row id on insert, 1 on update, negative value on error.
+     * @return object            Created row id on insert, 1 on update, negative value on error.
      */
-    public function createOrUpdateSecret(User $user, $secret, $enabled = 0)
+    public function createOrUpdateSecret(User $currentUser, $secret, $enabled = 0)
     {
-        $mfa = $this->getForUser($user->id);
+        global $user;
+        $mfa = $this->getForUser($currentUser->id, $currentUser->entity);
         require_once DOL_DOCUMENT_ROOT . '/core/lib/security.lib.php';
         if (!$mfa) {
             $mfa = new MFA($this->db);
-            $mfa->fk_user = $user->id;
-            $mfa->entity = $user->entity;
+            $mfa->fk_user = $currentUser->id;
+            $mfa->entity = $currentUser->entity;
+            $mfa->secret = dolEncrypt($secret);
+            $mfa->enabled = $enabled;
+            $mfa->create($user);
+        } else {
+            $mfa->fetch($mfa->id);
+            $mfa->enabled = $enabled;
+            $mfa->update($user);
         }
-
-
-        $mfa->secret = dolEncrypt($secret);
-        $mfa->enabled = $enabled;
 
         if ($mfa->id) {
             return $mfa->update($user);
@@ -104,11 +108,11 @@ class MFAService
     public function enableMFA(User $user)
     {
         $mfa = $this->getForUser($user->id);
-        if ($mfa) {
-            $mfa->enabled = 1;
-            return $mfa->update($user);
+        if (!$mfa) {
+            $mfa = $this->createOrUpdateSecret($user, $this->generateSecret(), 1);
         }
-        return -1;
+        $mfa->enabled = 1;
+        return $mfa->update($user);
     }
 
     /**

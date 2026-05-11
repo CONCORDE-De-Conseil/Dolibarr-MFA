@@ -34,13 +34,14 @@ require_once dol_buildpath('/mfa/lib/mfa.lib.php');
  */
 class ActionsMFA
 {
-    const MFA_SETUP_MAX_ATTEMPTS = 5;
-    const MFA_SETUP_COOLDOWN = 300;
 
     /**
      * @var DoliDB Database handler.
      */
     public $db;
+
+    private $maxAttempts;
+    private $cooldown;
 
     /**
      * @var string Error code (or message)
@@ -76,7 +77,10 @@ class ActionsMFA
      */
     public function __construct($db)
     {
+        global $conf;
         $this->db = $db;
+        $this->maxAttempts = $conf->global->MFA_MAX_ATTEMPTS ?? 5;
+        $this->cooldown = $conf->global->MFA_SETUP_COOLDOWN ?? 300;
     }
 
     /**
@@ -177,7 +181,7 @@ class ActionsMFA
 
         $logoutUrl = DOL_URL_ROOT . '/user/logout.php?token=' . newToken();
 
-        print '<div class="warning">' . $langs->trans('MFAPendingChallenge') . ' ' . $langs->trans('MFAContinueAs',  $pendingLoginEscaped ) . '<a href="' . dol_escape_htmltag($logoutUrl) . '">' . $langs->trans('Logout') . '</a></strong></div>';
+        print '<div class="warning">' . $langs->trans('MFAPendingChallenge') . ' ' . $langs->trans('MFAContinueAs',  $pendingLoginEscaped) . '<a href="' . dol_escape_htmltag($logoutUrl) . '">' . $langs->trans('Logout') . '</a></strong></div>';
 
         $formquestion = array(
             array(
@@ -353,7 +357,7 @@ class ActionsMFA
 
     public function doActions($parameters, &$object, &$action, $hookmanager)
     {
-        global $langs, $user;
+        global $langs, $user, $conf;
         $langs->load("mfa@mfa");
 
         if ($parameters['currentcontext'] == 'usercard') {
@@ -410,7 +414,7 @@ class ActionsMFA
                 $secret = dolDecrypt($mfa->secret);
                 $code = GETPOST('mfa_verif', 'alphanohtml');
                 if ($mfaService->verifyCode($secret, $code)) {
-                    $mfaService->enableMFA($currentUser);
+                    $mfa = $mfaService->createOrUpdateSecret($currentUser, $secret, 1);
                     $attemptService->markSuccessfulAttempt($currentUser->id, $currentUser->entity, MFAAttemptService::SCOPE_SETUP, empty($_SERVER['REMOTE_ADDR']) ? '' : $_SERVER['REMOTE_ADDR']);
                     setEventMessages($langs->trans("MFAEnabled"), null, 'mesgs');
                 } else {
@@ -418,8 +422,8 @@ class ActionsMFA
                         $currentUser->id,
                         $currentUser->entity,
                         MFAAttemptService::SCOPE_SETUP,
-                        self::MFA_SETUP_MAX_ATTEMPTS,
-                        self::MFA_SETUP_COOLDOWN,
+                        $this->maxAttempts,
+                        $this->cooldown,
                         empty($_SERVER['REMOTE_ADDR']) ? '' : $_SERVER['REMOTE_ADDR']
                     );
                     setEventMessages($langs->trans("InvalidCode"), null, 'errors');
