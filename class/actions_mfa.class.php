@@ -130,6 +130,45 @@ class ActionsMFA
         }
     }
 
+    /**
+     * Store a temporary MFA setup session for the target user.
+     *
+     * @param int $userId User identifier
+     * @param int $entity  Entity identifier
+     * @return void
+     */
+    private function startMfaSetupSession($userId, $entity)
+    {
+        $_SESSION['dol_mfa_setup_user_id'] = (int) $userId;
+        $_SESSION['dol_mfa_setup_entity'] = (int) $entity;
+    }
+
+    /**
+     * Check whether the MFA setup form may be shown for the target user.
+     *
+     * @param int $userId User identifier
+     * @param int $entity Entity identifier
+     * @return bool
+     */
+    private function hasValidMfaSetupSession($userId, $entity)
+    {
+        return !empty($_SESSION['dol_mfa_setup_user_id'])
+            && !empty($_SESSION['dol_mfa_setup_entity'])
+            && (int) $_SESSION['dol_mfa_setup_user_id'] === (int) $userId
+            && (int) $_SESSION['dol_mfa_setup_entity'] === (int) $entity;
+    }
+
+    /**
+     * Clear the temporary MFA setup session.
+     *
+     * @return void
+     */
+    private function clearMfaSetupSession()
+    {
+        unset($_SESSION['dol_mfa_setup_user_id']);
+        unset($_SESSION['dol_mfa_setup_entity']);
+    }
+
 
     /**
      * Inject MFA field into login form
@@ -164,48 +203,69 @@ class ActionsMFA
 
         if (empty($_SESSION['dol_mfa_challenge_user_id'])) {
             return 0;
+        } else {
+
+            $pendingLogin = (string) $_SESSION['dol_mfa_challenge_login'];
+            $pendingLoginEscaped = dol_escape_htmltag($pendingLogin);
+
+            // Link to externalized MFA CSS
+            $cssUrl = dol_buildpath('/mfa/css/mfa.css.php', 1);
+            print '<link rel="stylesheet" href="' . $cssUrl . '">';
+
+            // Modern MFA HTML
+            $html = <<<'HTML'
+<div class="mfa-container">
+    <div class="mfa-header">
+        <div class="mfa-icon">🔐</div>
+        <h2>Two-Factor Authentication</h2>
+        <p>Additional security verification required</p>
+    </div>
+
+    <div class="mfa-content">
+        <div class="mfa-user-info">
+            <strong>Logged in as:</strong>
+            <span>USER_LOGIN</span>
+        </div>
+
+        <form method="POST" action="PAGE_CONFIRM">
+            <div class="mfa-form-group">
+                <label for="mfa_code_modern">Enter 6-digit code</label>
+                <input
+                    type="text"
+                    id="mfa_code_modern"
+                    name="mfa_code"
+                    maxlength="6"
+                    placeholder="000000"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    autofocus
+                    
+                >
+            </div>
+
+            <div class="mfa-buttons">
+                <button type="submit" name="action" value="login" class="mfa-btn-submit">
+                    ✓ Verify Code
+                </button>
+                <button type="submit" name="mfaabort" value="1" class="mfa-btn-logout">
+                    ✕ Logout
+                </button>
+            </div>
+
+            <div class="mfa-help-text">
+                <strong>Don't have access to your authenticator?</strong><br>
+                Contact your administrator for assistance.
+            </div>
+        </form>
+    </div>
+</div>
+HTML;
+
+            // Replace placeholders
+            $html = str_replace('USER_LOGIN', $pendingLoginEscaped, $html);
+
+            print $html;
         }
-
-        require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
-
-        $form = new Form($this->db);
-        $pendingLogin = (string) $_SESSION['dol_mfa_challenge_login'];
-        $pendingLoginEscaped = dol_escape_htmltag($pendingLogin);
-        $pendingEntity = (int) $_SESSION['dol_mfa_challenge_entity'];
-        $pageConfirm = $_SERVER['PHP_SELF']
-            . '?username=' . urlencode($pendingLogin)
-            . '&entity=' . $pendingEntity
-            . '&actionlogin=login'
-            . '&loginfunction=loginfunction';
-        $confirmMessage = $langs->trans('EnterMFACode') . '<br><span class="opacitymedium">' . $langs->trans('MFAContinueAs', $pendingLoginEscaped) . '</span>';
-
-        $logoutUrl = DOL_URL_ROOT . '/user/logout.php?token=' . newToken();
-
-        print '<div class="warning">' . $langs->trans('MFAPendingChallenge') . ' ' . $langs->trans('MFAContinueAs',  $pendingLoginEscaped) . '<a href="' . dol_escape_htmltag($logoutUrl) . '">' . $langs->trans('Logout') . '</a></strong></div>';
-
-        $formquestion = array(
-            array(
-                'name' => 'mfa_code',
-                'label' => $langs->trans('OTPCode'),
-                'type' => 'text',
-                'value' => '',
-                'size' => 6,
-                'moreattr' => 'maxlength="6" inputmode="numeric" autocomplete="one-time-code" id="mfa_code"',
-            ),
-        );
-
-        $formconfirm = $form->formconfirm(
-            $pageConfirm,
-            $langs->trans('MFAVerification'),
-            $confirmMessage,
-            'login',
-            $formquestion,
-            '',
-            2,
-            260
-        );
-
-        print $formconfirm;
 
         return 0;
     }
@@ -254,6 +314,8 @@ class ActionsMFA
                 } else {
                     $secret = dolDecrypt($mfa->secret);
                 }
+
+                $this->startMfaSetupSession($currentUser->id, $currentUser->entity);
             }
 
             // 🔹 Status row
@@ -276,7 +338,7 @@ class ActionsMFA
             print '</td></tr>';
             // 🔹 Setup screen
 
-            if ($currentAction === 'setupmfa' && $mfa && $canManageMfa && $hasValidActionToken) {
+            if ($mfa && $canManageMfa && $this->hasValidMfaSetupSession($currentUser->id, $currentUser->entity)) {
                 require_once DOL_DOCUMENT_ROOT . '/core/lib/security.lib.php';
 
                 // 1. Try to decrypt
@@ -383,6 +445,7 @@ class ActionsMFA
                 if ($user->admin || $user->id == $currentUser->id) {
                     $mfaService->disableForUser($currentUser);
                     $attemptService->resetAttempts($currentUser->id, $currentUser->entity, MFAAttemptService::SCOPE_SETUP, (int) $user->id);
+                    $this->clearMfaSetupSession();
                     setEventMessages($langs->trans("MFADisabled"), null, 'mesgs');
                 }
             }
@@ -416,6 +479,7 @@ class ActionsMFA
                 if ($mfaService->verifyCode($secret, $code)) {
                     $mfa = $mfaService->createOrUpdateSecret($currentUser, $secret, 1);
                     $attemptService->markSuccessfulAttempt($currentUser->id, $currentUser->entity, MFAAttemptService::SCOPE_SETUP, empty($_SERVER['REMOTE_ADDR']) ? '' : $_SERVER['REMOTE_ADDR']);
+                    $this->clearMfaSetupSession();
                     setEventMessages($langs->trans("MFAEnabled"), null, 'mesgs');
                 } else {
                     $attemptService->recordFailedAttempt(

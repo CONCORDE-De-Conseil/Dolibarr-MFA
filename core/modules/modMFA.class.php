@@ -27,7 +27,7 @@ class modMFA extends DolibarrModules
         $this->name = preg_replace('/^mod/i', '', get_class($this));
         $this->family = "hr";
         $this->description = "Multi-Factor Authentication for Dolibarr users using TOTP";
-        $this->version = '1.0';
+        $this->version = '1.1';
         $this->const_name = 'MAIN_MODULE_' . strtoupper($this->name);
         $this->special = 0;
         $this->picto = 'mfa'; // We use email picto for now
@@ -54,7 +54,7 @@ class modMFA extends DolibarrModules
             'theme' => 0,
             // Set this to relative path of css file if module has its own css file
             'css' => array(
-                // '/mfa/css/mfa.css.php',
+                '/mfa/css/mfa.css.php',
             ),
             // Set this to relative path of js file if module must load a js on all pages
             'js' => array(
