@@ -98,6 +98,7 @@ function check_user_password_mfa($login, $password, $entity)
     $attemptService = new MFAAttemptService($db);
     $mfa = $mfaService->getForUser($userstatic->id, $userstatic->entity);
 
+
     if ($mfa && $mfa->enabled) {
         $cooldownRemaining = $attemptService->getCooldownRemaining($userstatic->id, $userstatic->entity, MFAAttemptService::SCOPE_LOGIN);
         if ($cooldownRemaining > 0) {

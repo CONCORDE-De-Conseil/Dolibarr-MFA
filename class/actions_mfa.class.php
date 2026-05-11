@@ -118,6 +118,8 @@ class ActionsMFA
         unset($_SESSION['dol_mfa_challenge_login']);
         unset($_SESSION['dol_mfa_challenge_entity']);
         unset($_SESSION['dol_mfa_password_verified']);
+        unset($_SESSION['dol_login']);  // Clear the login session
+        unset($_SESSION['dol_loginmesg']);  // Clear any pending message
 
         if ($renewSessionId) {
             session_regenerate_id(true);
@@ -143,10 +145,17 @@ class ActionsMFA
         $requestedAction = GETPOST('action', 'aZ09');
         $confirm = GETPOST('confirm', 'alpha');
         $mfaAbort = GETPOSTINT('mfaabort');
-        if (!empty($_SESSION['dol_mfa_challenge_user_id']) && (($requestedAction === 'login' && $confirm === 'no') || $mfaAbort === 1)) {
+
+        $isSessionSetted = isset($_SESSION['dol_mfa_challenge_user_id']) && !empty($_SESSION['dol_mfa_challenge_user_id']) && $_SESSION['dol_mfa_challenge_user_id'] != null;
+
+        if ($isSessionSetted  && (($requestedAction === 'login' && $confirm === 'no') || $mfaAbort === 1)) {
             $this->clearMfaChallengeSession(true);
             $_SESSION['dol_loginmesg'] = $langs->trans('MFASessionDestroyed');
-            return 0;
+
+            $urllogout = DOL_URL_ROOT . '/user/logout.php?token=' . newToken();
+            // header('Location: ' . $urllogout);
+            print '<script>window.location.href = "' . $urllogout . '";</script>';
+            return -1;
         }
 
         if (empty($_SESSION['dol_mfa_challenge_user_id'])) {
@@ -166,8 +175,9 @@ class ActionsMFA
             . '&loginfunction=loginfunction';
         $confirmMessage = $langs->trans('EnterMFACode') . '<br><span class="opacitymedium">' . $langs->trans('MFAContinueAs', $pendingLoginEscaped) . '</span>';
 
-        $logoutUrl = $_SERVER['PHP_SELF'] . '?mfaabort=1&token=' . urlencode(newToken());
-        print '<div class="warning">' . $langs->trans('MFAPendingChallenge') . ' ' . $langs->trans('MFAContinueAs', '<strong>' . $pendingLoginEscaped . '</strong>') . ' <a href="' . dol_escape_htmltag($logoutUrl) . '">' . $langs->trans('Logout') . '</a></div>';
+        $logoutUrl = DOL_URL_ROOT . '/user/logout.php?token=' . newToken();
+
+        print '<div class="warning">' . $langs->trans('MFAPendingChallenge') . ' ' . $langs->trans('MFAContinueAs',  $pendingLoginEscaped ) . '<a href="' . dol_escape_htmltag($logoutUrl) . '">' . $langs->trans('Logout') . '</a></strong></div>';
 
         $formquestion = array(
             array(
