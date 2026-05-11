@@ -69,7 +69,7 @@ width:100%; padding:12px 16px; font-size:18px; border:2px solid #e0e0e0; border-
 .mfa-form-group input::placeholder { letter-spacing:2px; opacity:0.5; }
 
 .mfa-buttons { display:flex; gap:12px; margin-top:24px; }
-.mfa-btn-submit { flex:1; padding:12px 24px; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; border:none; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; transition:all 0.3s ease; box-shadow:0 4px 15px rgba(102,126,234,0.3); }
+.mfa-btn-submit { flex:1; padding:12px 24px; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; border:none; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; transition:all 0.3s ease; box-shadow:0 4px 15px rgba(102,126,234,0.3);color:white !important; }
 .mfa-btn-submit:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(102,126,234,0.4); }
 .mfa-btn-submit:active { transform:translateY(0); }
 .mfa-btn-logout { flex:1; padding:12px 24px; background:#f0f0f0; color:#333; border:2px solid #e0e0e0; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; transition:all 0.3s ease; text-decoration:none; display:flex; align-items:center; justify-content:center; }
@@ -150,17 +150,31 @@ padding: 8px 12px;
 font-size: 1.15em;
 border-width: 2px;
 }
+
+.mfa-setup-input {
+width: 100% !important;
+text-align: center;
+font-size: 1.35em;
+font-weight: bold;
+height: 42px;
+}
+
 .mfa-setup-content .mfa-buttons { margin-top: 0; }
-.mfa-setup-buttons { justify-content: center; }
+.mfa-setup-buttons { justify-content: center; gap: 12px; }
+.mfa-setup-buttons form { flex: 1; display: flex; }
+.mfa-setup-buttons form input[type="submit"],
+.mfa-setup-buttons form button[type="submit"] { width: 100%; margin: 0; }
 
 .mfa-setup-content .mfa-btn-submit {
-display: inline-flex;
+display: flex;
 align-items: center;
 justify-content: center;
-min-width: 180px;
+width: 100%;
 padding: 9px 16px;
 font-size: 14px;
 }
+
+.mfa-setup-buttons .mfa-btn-logout { width: 100%; }
 
 /* Small devices adjustments */
 @media (max-width:480px) {

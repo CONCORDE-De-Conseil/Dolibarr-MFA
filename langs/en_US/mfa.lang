@@ -93,3 +93,4 @@ ContactAdminForHelp = Contact your administrator for assistance.
 # Setup card
 MFASetupTitle = Set up your authenticator
 MFASetupSubtitle = Scan the QR code and enter the verification code below
+CancelSetupMFA = Cancel Setup

@@ -213,20 +213,26 @@ class ActionsMFA
             print '        </div>';
             print '      </div>';
 
-            print '      <form method="POST" action="' . $setupUrl . '">';
-            print '        <input type="hidden" name="action" value="enablemfa">';
-            print '        <input type="hidden" name="token" value="' . newToken() . '">';
-            print '        <div class="mfa-form-group">';
-            print '          <label for="mfa_verif">' . $langs->trans("EnterSixDigitCode") . '</label>';
-            print '          <input type="text" name="mfa_verif" id="mfa_verif" maxlength="6" placeholder="000000" class="flat" inputmode="numeric" autocomplete="one-time-code" style="width: 100%; text-align: center; font-size: 1.35em; font-weight: bold; height: 42px;">';
-            print '        </div>';
+            print '      <div class="mfa-form-group">';
+            print '        <label for="mfa_verif">' . $langs->trans("EnterSixDigitCode") . '</label>';
+            print '        <input type="text" name="mfa_verif" id="mfa_verif" maxlength="6" placeholder="000000" class="flat mfa-setup-input" inputmode="numeric" autocomplete="one-time-code">';
+            print '      </div>';
 
-            print '        <div class="opacitymedium mfa-setup-help">' . $langs->trans("EnterSixDigitCodeFromApp") . '</div>';
+            print '      <div class="opacitymedium mfa-setup-help">' . $langs->trans("EnterSixDigitCodeFromApp") . '</div>';
 
-            print '        <div class="mfa-buttons mfa-setup-buttons">';
-            print '          <input type="submit" class=" mfa-btn-submit" value="' . $langs->trans("VerifyAndEnable") . '">';
-            print '        </div>';
-            print '      </form>';
+            print '      <div class="mfa-buttons mfa-setup-buttons">';
+            print '        <form method="POST" action="' . $setupUrl . '" style="flex:1;" id="verify-form">';
+            print '          <input type="hidden" name="action" value="enablemfa">';
+            print '          <input type="hidden" name="token" value="' . newToken() . '">';
+            print '          <input type="hidden" name="mfa_verif" id="mfa_verif_hidden">';
+            print '          <input type="submit" class="mfa-btn-submit" value="' . $langs->trans("VerifyAndEnable") . '" onclick="document.getElementById(\'mfa_verif_hidden\').value = document.getElementById(\'mfa_verif\').value;">';
+            print '        </form>';
+            print '        <form method="POST" action="' . $setupUrl . '" style="flex:1;">';
+            print '          <input type="hidden" name="action" value="cancelmfa">';
+            print '          <input type="hidden" name="token" value="' . newToken() . '">';
+            print '          <button type="submit" class="mfa-btn-logout">' . $langs->trans("CancelSetupMFA") . '</button>';
+            print '        </form>';
+            print '      </div>';
             print '    </div>';
             print '  </div>';
             print '</td></tr>';
@@ -410,7 +416,7 @@ HTML;
                 print '<span class="badge badge-status5 badge-status">' . $langs->trans("Disabled") . '</span>';
 
                 if ($canManageMfa) {
-                    print '<a href="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=setupmfa&token=' . newToken() . '" class="butAction" style="margin-left: 5px;">' . $langs->trans("SetupMFA") . '</a>';
+                    print '<a href="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=setupmfa&token=' . newToken() . '" class="mfa-btn-submit" style="margin-left: 5px; padding: 6px;">' . $langs->trans("SetupMFA") . '</a>';
                 }
             }
 
@@ -474,6 +480,20 @@ HTML;
                     $this->clearMfaSetupSession();
                     setEventMessages($langs->trans("MFADisabled"), null, 'mesgs');
                 }
+            }
+
+            if ($action == 'cancelmfa') {
+                if (!$this->canManageMfaForUser($user, $currentUser)) {
+                    setEventMessages($langs->trans("ErrorForbidden"), null, 'errors');
+                    return 0;
+                }
+                if (!$this->hasValidActionToken()) {
+                    setEventMessages($langs->trans("ErrorBadToken"), null, 'errors');
+                    return 0;
+                }
+                $this->clearMfaSetupSession();
+                header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $currentUser->id);
+                exit;
             }
 
             if ($action == 'enablemfa') {
