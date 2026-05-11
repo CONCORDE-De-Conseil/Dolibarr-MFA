@@ -30,7 +30,7 @@ class modMFA extends DolibarrModules
         $this->version = '1.0';
         $this->const_name = 'MAIN_MODULE_' . strtoupper($this->name);
         $this->special = 0;
-        $this->picto = 'email'; // We use email picto for now
+        $this->picto = 'mfa'; // We use email picto for now
 
         // Module parts (hooks, login backend, etc)
         $this->module_parts = array(
@@ -89,6 +89,66 @@ class modMFA extends DolibarrModules
         $this->dictionaries = array();
         $this->flags = array();
         $this->rights = array();
+
+
+        // Main menu entries to add
+        $this->menu = array();
+        $r = 0;
+        // Add here entries to declare new menus
+        /* BEGIN MODULEBUILDER TOPMENU */
+        $this->menu[$r++] = array(
+            'fk_menu' => '', // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
+            'type' => 'top', // This is a Top menu entry
+            'titre' => 'MFA',
+            'prefix' => img_picto('', $this->picto, 'class="pictofixedwidth valignmiddle"'),
+            'mainmenu' => 'mfa',
+            'leftmenu' => '',
+            'url' => '/mfa/admin/setup.php',
+            'langs' => 'mfa@mfa', // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
+            'position' => 1000 + $r,
+            'enabled' => 'isModEnabled("mfa")', // Define condition to show or hide menu entry. Use 'isModEnabled("mfa")' if entry must be visible if module is enabled.
+            'perms' => '$user->admin',
+            'target' => '',
+            'user' => 0, // 0=Menu for internal users, 1=external users, 2=both
+        );
+        /* END MODULEBUILDER TOPMENU */
+
+        /* BEGIN MODULEBUILDER LEFTMENU MFA */
+        $this->menu[$r++] = array(
+            'fk_menu' => 'fk_mainmenu=mfa',
+            'type' => 'left',
+            'titre' => 'Setup',
+            'prefix' => img_picto('', 'lock', 'class="paddingright pictofixedwidth valignmiddle"'),
+            'mainmenu' => 'mfa',
+            'leftmenu' => 'mfa',
+            'url' => '/mfa/admin/setup.php',
+            'langs' => 'mfa@mfa',
+            'position' => 1000 + $r,
+            'enabled' => 'isModEnabled("mfa")',
+            'perms' => '$user->admin',
+            'target' => '',
+            'user' => 2,
+            'object' => ''
+        );
+
+        $this->menu[$r++] = array(
+            'fk_menu' => 'fk_mainmenu=mfa',
+            'type' => 'left',
+            'titre' => 'Attempts',
+            'prefix' => img_picto('', 'lock', 'class="paddingright pictofixedwidth valignmiddle"'),
+            'mainmenu' => 'mfa',
+            'leftmenu' => 'mfa',
+            'url' => '/mfa/admin/attempts.php',
+            'langs' => 'mfa@mfa',
+            'position' => 1000 + $r,
+            'enabled' => 'isModEnabled("mfa")',
+            'perms' => '$user->admin',
+            'target' => '',
+            'user' => 2,
+            'object' => ''
+        );
+
+
         $this->rights_class = 'mfa';
     }
 
