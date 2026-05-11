@@ -56,7 +56,7 @@ For project inquiries or deployment assistance:
 
 ### From a ZIP package
 
-If you have a packaged archive such as `module_mfa-1.0.zip`:
+If you have a packaged archive such as `module_mfa-1.1.zip`:
 
 1. Log in to Dolibarr as a super-administrator.
 2. Go to `Home > Setup > Modules/Applications > Deploy/Install external module`.
