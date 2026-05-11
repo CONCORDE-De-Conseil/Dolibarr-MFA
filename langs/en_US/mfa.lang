@@ -89,3 +89,7 @@ VerifyCode = Verify Code
 Logout = Logout
 NoAccessAuthenticator = Don't have access to your authenticator?
 ContactAdminForHelp = Contact your administrator for assistance.
+
+# Setup card
+MFASetupTitle = Set up your authenticator
+MFASetupSubtitle = Scan the QR code and enter the verification code below

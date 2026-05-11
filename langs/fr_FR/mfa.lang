@@ -88,3 +88,7 @@ VerifyCode = Vérifier le code
 Logout = Déconnexion
 NoAccessAuthenticator = Vous n'avez pas accès à votre authenticateur ?
 ContactAdminForHelp = Contactez votre administrateur pour obtenir de l'aide.
+
+# Carte de configuration
+MFASetupTitle = Configurez votre authentificateur
+MFASetupSubtitle = Scannez le code QR et saisissez le code de vérification ci-dessous

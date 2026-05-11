@@ -169,6 +169,72 @@ class ActionsMFA
         unset($_SESSION['dol_mfa_setup_entity']);
     }
 
+    /**
+     * Render the MFA setup card with the same palette used by the login modal.
+     *
+     * @param object $langs        Translation handler
+     * @param MFAService $mfaService MFA service handler
+     * @param User $currentUser    Target user
+     * @param string $secret       Base32 secret
+     * @param string $setupUrl     Form action URL
+     * @return void
+     */
+    private function renderMfaSetupCard($langs, $mfaService, User $currentUser, $secret, $setupUrl)
+    {
+        try {
+            $uri = $mfaService->getProvisioningUri($currentUser->login, $secret);
+
+            require_once TCPDF_PATH . 'tcpdf_barcodes_2d.php';
+            $barcodeobj = new TCPDF2DBarcode($uri, 'QRCODE,L');
+            $imageData = (string) $barcodeobj->getBarcodePngData(5, 5);
+            $qrCodeBase64 = 'data:image/png;base64,' . base64_encode($imageData);
+
+            print '<tr class="trextrafields"><td colspan="2" style="padding:0; border:0;">';
+            print '  <div class="mfa-container mfa-setup-modal">';
+            print '    <div class="mfa-header mfa-setup-header">';
+            print '      <div class="mfa-icon">🔐</div>';
+            print '      <h2>' . $langs->trans("MFASetupTitle") . '</h2>';
+            print '      <p>' . $langs->trans("MFASetupSubtitle") . '</p>';
+            print '    </div>';
+
+            print '    <div class="mfa-content mfa-setup-content">';
+            print '      <div class="mfa-setup-grid">';
+            print '        <div class="mfa-setup-qr">';
+            print '          <div class="mfa-setup-qr-frame">';
+            print '            <img src="' . $qrCodeBase64 . '" alt="QR Code" />';
+            print '          </div>';
+            print '          <div class="opacitymedium">' . $langs->trans("ScanThisWithYourApp") . '</div>';
+            print '        </div>';
+
+            print '        <div class="mfa-setup-secret">';
+            print '          <label>' . $langs->trans("MFASecretKey") . '</label>';
+            print '          <code>' . $secret . '</code>';
+            print '          <div class="opacitymedium">' . $langs->trans("UseThisForManualEntry") . '</div>';
+            print '        </div>';
+            print '      </div>';
+
+            print '      <form method="POST" action="' . $setupUrl . '">';
+            print '        <input type="hidden" name="action" value="enablemfa">';
+            print '        <input type="hidden" name="token" value="' . newToken() . '">';
+            print '        <div class="mfa-form-group">';
+            print '          <label for="mfa_verif">' . $langs->trans("EnterSixDigitCode") . '</label>';
+            print '          <input type="text" name="mfa_verif" id="mfa_verif" maxlength="6" placeholder="000000" class="flat" inputmode="numeric" autocomplete="one-time-code" style="width: 100%; text-align: center; font-size: 1.35em; font-weight: bold; height: 42px;">';
+            print '        </div>';
+
+            print '        <div class="opacitymedium mfa-setup-help">' . $langs->trans("EnterSixDigitCodeFromApp") . '</div>';
+
+            print '        <div class="mfa-buttons mfa-setup-buttons">';
+            print '          <input type="submit" class=" mfa-btn-submit" value="' . $langs->trans("VerifyAndEnable") . '">';
+            print '        </div>';
+            print '      </form>';
+            print '    </div>';
+            print '  </div>';
+            print '</td></tr>';
+        } catch (Exception $e) {
+            print '<tr class="trextrafields"><td colspan="2"><div class="error">' . $e->getMessage() . '</div></td></tr>';
+        }
+    }
+
 
     /**
      * Inject MFA field into login form
@@ -311,6 +377,9 @@ HTML;
             $canManageMfa = $this->canManageMfaForUser($user, $currentUser);
             $hasValidActionToken = $this->hasValidActionToken();
 
+            $setupUrl = $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id;
+            $setupCardDisplayed = false;
+
             // Ensure a provisioning secret exists only after a valid authorized setup request.
             if ($currentAction === 'setupmfa' && $canManageMfa && $hasValidActionToken) {
                 // If we are in setup mode, we only generate a new secret if the user doesn't already have an unconfirmed one
@@ -324,6 +393,8 @@ HTML;
                 }
 
                 $this->startMfaSetupSession($currentUser->id, $currentUser->entity);
+                $this->renderMfaSetupCard($langs, $mfaService, $currentUser, $secret, $setupUrl);
+                $setupCardDisplayed = true;
             }
 
             // 🔹 Status row
@@ -339,14 +410,14 @@ HTML;
                 print '<span class="badge badge-status5 badge-status">' . $langs->trans("Disabled") . '</span>';
 
                 if ($canManageMfa) {
-                    print ' <a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=setupmfa&token=' . newToken() . '">' . $langs->trans("SetupMFA") . '</a>';
+                    print '<a href="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '&action=setupmfa&token=' . newToken() . '" class="butAction" style="margin-left: 5px;">' . $langs->trans("SetupMFA") . '</a>';
                 }
             }
 
             print '</td></tr>';
             // 🔹 Setup screen
 
-            if ($mfa && $canManageMfa && $this->hasValidMfaSetupSession($currentUser->id, $currentUser->entity)) {
+            if ($mfa && $canManageMfa && $this->hasValidMfaSetupSession($currentUser->id, $currentUser->entity) && !$setupCardDisplayed) {
                 require_once DOL_DOCUMENT_ROOT . '/core/lib/security.lib.php';
 
                 // 1. Try to decrypt
@@ -363,60 +434,7 @@ HTML;
                     print '<div class="warning">Previous secret was invalid. A new one has been generated.</div>';
                 }
 
-                // 3. Build URI with the CLEAN secret
-                $uri = $mfaService->getProvisioningUri($currentUser->login, $secret);
-
-                // 4. Generate QR
-                require_once TCPDF_PATH . 'tcpdf_barcodes_2d.php';
-                try {
-                    // 1. Generate QR Code
-                    $barcodeobj = new TCPDF2DBarcode($uri, 'QRCODE,L');
-                    $imageData = (string)$barcodeobj->getBarcodePngData(5, 5);
-                    $qrCodeBase64 = 'data:image/png;base64,' . base64_encode($imageData);
-
-                    // --- ROW 1: QR CODE ---
-                    print '<tr class="trextrafields">';
-                    print '<td class="titlefield">' . $langs->trans("MFAQRCode") . '</td>';
-                    print '<td>';
-                    print '    <div style="background:#fff; padding:20px; display:inline-block; border:1px solid #ccc; border-radius: 4px;">';
-                    print '        <img src="' . $qrCodeBase64 . '" alt="QR Code" />';
-                    print '    </div>';
-                    print '    <div class="opacitymedium">' . $langs->trans("ScanThisWithYourApp") . '</div>';
-                    print '</td></tr>';
-
-                    // --- ROW 2: TEXT SECRET ---
-                    print '<tr class="trextrafields">';
-                    print '<td class="titlefield">' . $langs->trans("MFASecretKey") . '</td>';
-                    print '<td>';
-                    print '    <code style="font-size:1.4em; letter-spacing:2px; background: #eee; padding: 2px 8px; border-radius: 3px;">' . $secret . '</code>';
-                    print '    <div class="opacitymedium">' . $langs->trans("UseThisForManualEntry") . '</div>';
-                    print '</td></tr>';
-
-                    // --- ROW 3: VERIFICATION INPUT ---
-                    print '<tr class="trextrafields">';
-                    print '<td class="titlefield"><strong>' . $langs->trans("VerifyAndEnable") . '</strong></td>';
-                    print '<td>';
-
-                    // Start Form
-                    print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '?id=' . $currentUser->id . '">';
-                    print '<input type="hidden" name="action" value="enablemfa">';
-                    print '<input type="hidden" name="token" value="' . newToken() . '">';
-
-                    print '<div style="margin-top: 10px;">';
-                    print '    <input type="text" name="mfa_verif" id="mfa_verif" maxlength="6" ';
-                    print '           placeholder="000000" class="flat" ';
-                    print '           style="width: 120px; text-align: center; font-size: 1.5em; font-weight: bold; height: 40px; margin-right: 10px;">';
-
-                    print '    <input type="submit" class="button" value="' . $langs->trans("VerifyAndEnable") . '">';
-                    print '</div>';
-
-                    print '<div class="opacitymedium" style="margin-top: 5px;">' . $langs->trans("EnterSixDigitCodeFromApp") . '</div>';
-                    print '</form>';
-
-                    print '</td></tr>';
-                } catch (Exception $e) {
-                    print '<tr class="trextrafields"><td colspan="2"><div class="error">' . $e->getMessage() . '</div></td></tr>';
-                }
+                $this->renderMfaSetupCard($langs, $mfaService, $currentUser, $secret, $setupUrl);
             }
 
             print '<!-- End MFA Section -->';

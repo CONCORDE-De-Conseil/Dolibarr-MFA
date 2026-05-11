@@ -88,3 +88,7 @@ VerifyCode = تحقق من الكود
 Logout = تسجيل الخروج
 NoAccessAuthenticator = ليس لديك حق الوصول إلى المصادق الخاص بك؟
 ContactAdminForHelp = تواصل مع مسؤول النظام للحصول على المساعدة.
+
+# بطاقة الإعداد
+MFASetupTitle = إعداد تطبيق المصادقة
+MFASetupSubtitle = امسح رمز QR وأدخل رمز التحقق أدناه

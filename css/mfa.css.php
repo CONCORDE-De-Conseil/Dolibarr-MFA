@@ -78,11 +78,101 @@ width:100%; padding:12px 16px; font-size:18px; border:2px solid #e0e0e0; border-
 .mfa-help-text { margin-top:16px; padding-top:16px; border-top:1px solid #f0f0f0; color:#666; font-size:13px; line-height:1.5; }
 .mfa-help-text strong { color:#333; }
 
+/* Setup card styles used on the user card to match the login modal palette */
+.mfa-setup-modal {
+max-width: 560px;
+width: min(560px, calc(100vw - 32px));
+top: 48%;
+z-index: 10000;
+}
+
+.mfa-setup-modal::before {
+content: '';
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: rgba(0, 0, 0, 0.45);
+backdrop-filter: blur(4px);
+-webkit-backdrop-filter: blur(4px);
+z-index: -1;
+}
+
+.mfa-setup-header { padding: 16px 20px; }
+.mfa-setup-header h2 { font-size: 20px; }
+.mfa-setup-header p { font-size: 13px; }
+.mfa-setup-content { padding: 16px 20px 18px; }
+.mfa-setup-grid {
+display: grid;
+grid-template-columns: 1fr;
+gap: 12px;
+align-items: start;
+margin-bottom: 14px;
+}
+
+.mfa-setup-qr { text-align: center; }
+.mfa-setup-qr .opacitymedium { margin-top: 8px; }
+.mfa-setup-qr-frame {
+background: #fff;
+padding: 12px;
+display: inline-block;
+border: 1px solid rgba(102, 126, 234, 0.18);
+border-radius: 10px;
+box-shadow: 0 6px 18px rgba(102, 126, 234, 0.12);
+}
+.mfa-setup-qr-frame img { display: block; max-width: 100%; height: auto; }
+
+.mfa-setup-secret {
+background: #f8f9ff;
+border-left: 4px solid #667eea;
+padding: 12px 14px;
+border-radius: 8px;
+text-align: center;
+}
+.mfa-setup-secret label { display:block; margin-bottom:8px; color:#333; font-weight:600; font-size:13px; text-align:left; }
+.mfa-setup-secret code {
+display:block;
+font-size:1.05em;
+letter-spacing:2px;
+background:#eee;
+padding: 8px 10px;
+border-radius: 8px;
+word-break: break-all;
+}
+
+.mfa-setup-content .mfa-form-group { margin-bottom: 10px; }
+.mfa-setup-help { margin: 2px 0 10px; }
+.mfa-setup-content .mfa-form-group input[type="text"] {
+width: 150px;
+height: 40px;
+padding: 8px 12px;
+font-size: 1.15em;
+border-width: 2px;
+}
+.mfa-setup-content .mfa-buttons { margin-top: 0; }
+.mfa-setup-buttons { justify-content: center; }
+
+.mfa-setup-content .mfa-btn-submit {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+min-width: 180px;
+padding: 9px 16px;
+font-size: 14px;
+}
+
 /* Small devices adjustments */
 @media (max-width:480px) {
 .mfa-container { width: calc(100vw - 24px); border-radius:12px; }
 .mfa-header { padding:20px; }
 .mfa-content { padding:20px; }
+.mfa-setup-modal { width: calc(100vw - 24px); max-width: 100%; }
+.mfa-setup-grid { grid-template-columns: 1fr; }
+.mfa-setup-content { padding: 20px; }
+.mfa-setup-header { padding: 20px; }
+.mfa-setup-content .mfa-form-group input[type="text"] { width: 100%; }
+.mfa-setup-content .mfa-btn-submit { width: 100%; min-width: 0; }
 }
 <?php
 /* Copyright (C) 2026 Ali WERGHEMMI <ali.werghemmi@concorde.tn>
