@@ -329,9 +329,27 @@ class ActionsMFA
                 CONTACT_ADMIN_TEXT
             </div>
         </form>
+        MFA_LOGIN_MESSAGE
     </div>
 </div>
 HTML;
+
+            // Handle error messages from session
+            $loginMsg = '';
+            if (!empty($_SESSION['dol_loginmesg'])) {
+                $rawMsg = $_SESSION['dol_loginmesg'];
+                $isWarning = (strpos($rawMsg, '<!-- warning -->') !== false);
+                $cleanMsg = str_replace('<!-- warning -->', '', $rawMsg);
+
+                $bgColor = $isWarning ? '#fffaf0' : '#fff5f5';
+                $textColor = $isWarning ? '#856404' : '#c53030';
+                $borderColor = $isWarning ? '#ffeeba' : '#feb2b2';
+
+                $loginMsg = '<div class="mfa-login-message" style="margin-top: 15px; padding: 12px; border-radius: 8px; background: '.$bgColor.'; color: '.$textColor.'; border: 1px solid '.$borderColor.'; font-size: 13px; text-align: center; font-weight: 500;">';
+                $loginMsg .= dol_escape_htmltag($cleanMsg);
+                $loginMsg .= '</div>';
+                unset($_SESSION['dol_loginmesg']); // Consume it so it's not shown behind the modal
+            }
 
             // Replace placeholders with translated text
             $html = str_replace('MFA_TITLE', $langs->trans('MFATitle'), $html);
@@ -343,6 +361,7 @@ HTML;
             $html = str_replace('LOGOUT_BTN', $langs->trans('Logout'), $html);
             $html = str_replace('NO_ACCESS_LABEL', $langs->trans('NoAccessAuthenticator'), $html);
             $html = str_replace('CONTACT_ADMIN_TEXT', $langs->trans('ContactAdminForHelp'), $html);
+            $html = str_replace('MFA_LOGIN_MESSAGE', $loginMsg, $html);
 
             print $html;
         }
