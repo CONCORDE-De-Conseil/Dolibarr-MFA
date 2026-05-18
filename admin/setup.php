@@ -114,6 +114,14 @@ $item->defaultFieldValue = 5;
 $item = $formSetup->newItem('MFA_SETUP_COOLDOWN');
 $item->defaultFieldValue = 300;
 
+$item = $formSetup->newItem('MFA_COLOR_START');
+$item->setAsColor();
+$item->defaultFieldValue = '667eea';
+
+$item = $formSetup->newItem('MFA_COLOR_END');
+$item->setAsColor();
+$item->defaultFieldValue = '764ba2';
+
 // End of definition of parameters
 
 $setupnotempty += count($formSetup->items);

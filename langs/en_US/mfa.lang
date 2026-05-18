@@ -79,6 +79,8 @@ MFAAttemptReset = Reset by admin
 MFAAttemptSuccess = Successful verification
 MFA_MAX_ATTEMPTS = Maximum MFA attempts
 MFA_SETUP_COOLDOWN = MFA setup cooldown (seconds)
+MFA_COLOR_START = Gradient start color
+MFA_COLOR_END = Gradient end color
 
 # Login Modal
 MFATitle = Two-Factor Authentication

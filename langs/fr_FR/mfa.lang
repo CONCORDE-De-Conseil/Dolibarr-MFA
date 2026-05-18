@@ -78,6 +78,8 @@ MFAAttemptReset = Réinitialisé par l'administrateur
 MFAAttemptSuccess = Vérification réussie
 MFA_MAX_ATTEMPTS = Nombre maximum de tentatives MFA
 MFA_SETUP_COOLDOWN = Délai de configuration MFA (secondes)
+MFA_COLOR_START = Couleur de début de dégradé
+MFA_COLOR_END = Couleur de fin de dégradé
 
 # Modal de connexion
 MFATitle = Authentification à deux facteurs
