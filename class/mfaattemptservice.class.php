@@ -91,6 +91,11 @@ class MFAAttemptService
         }
 
         $remaining = $this->db->jdate($state->locked_until) - dol_now();
+        if ($remaining <= 0) {
+            $this->resetAttempts($userId, $entity, $scope, 0, false);
+            return 0;
+        }
+
         return max(0, (int) $remaining);
     }
 
